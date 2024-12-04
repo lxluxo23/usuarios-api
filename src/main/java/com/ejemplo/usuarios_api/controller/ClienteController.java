@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 
 @RestController
+@CrossOrigin(origins = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 @RequestMapping("/api/clientes")
 public class ClienteController {
 
