@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface DeudaRepository extends JpaRepository<Deuda, Long> {
-    List<Deuda> findByClienteClienteId(Long clienteID); // Relación Cliente -> Propiedad clienteID
+    List<Deuda> findByCliente_ClienteId(Long clienteID); // Relación Cliente -> Propiedad clienteID
 }

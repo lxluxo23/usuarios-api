@@ -1,7 +1,11 @@
 package com.ejemplo.usuarios_api.controller;
 
 import com.ejemplo.usuarios_api.model.Cliente;
+import com.ejemplo.usuarios_api.model.Deuda;
+import com.ejemplo.usuarios_api.model.Pago;
 import com.ejemplo.usuarios_api.repository.ClienteRepository;
+import com.ejemplo.usuarios_api.repository.DeudaRepository;
+import com.ejemplo.usuarios_api.repository.PagoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +15,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.math.BigDecimal;
+import java.util.*;
+import java.time.LocalDate;
+import java.util.stream.Collectors;
+
 
 @RestController
 @RequestMapping("/api/clientes")
@@ -18,6 +27,12 @@ public class ClienteController {
 
     @Autowired
     private ClienteRepository clienteRepository;
+
+    @Autowired
+    private DeudaRepository deudaRepository;
+
+    @Autowired
+    private PagoRepository pagoRepository;
 
     // Obtener todos los clientes
     @GetMapping
@@ -33,14 +48,28 @@ public class ClienteController {
 
 
     // Obtener un cliente por su ID
+    // Obtener deudas por ID
+    @GetMapping("/{clienteId}/deudas")
+    public List<Deuda> obtenerDeudasPorCliente(@PathVariable Long clienteId) {
+        return deudaRepository.findByCliente_ClienteId(clienteId);
+    }
+
+    // Endpoint para obtener todos los pagos de un cliente
+    @GetMapping("/{clienteId}/pagos")
+    public List<Pago> obtenerPagosPorCliente(@PathVariable Long clienteId) {
+        return pagoRepository.findPagosByClienteId(clienteId);
+    }
+
+    // Obtener datos completos de un cliente para el dashboard
     @GetMapping("/{clienteId}")
     public ResponseEntity<Map<String, Object>> obtenerCliente(@PathVariable Long clienteId) {
         Optional<Cliente> clienteOpt = clienteRepository.findById(clienteId);
 
         if (clienteOpt.isPresent()) {
             Cliente cliente = clienteOpt.get();
+            List<Deuda> deudas = deudaRepository.findByCliente_ClienteId(clienteId);
 
-            // Crear datos simulados o basados en lógica de negocio
+            // Datos del cliente
             Map<String, Object> response = new HashMap<>();
             response.put("summary", Map.of(
                     "nombre", cliente.getNombre(),
@@ -49,18 +78,43 @@ public class ClienteController {
                     "telefono", cliente.getTelefono(),
                     "direccion", cliente.getDireccion()
             ));
+
+            // Indicadores
+            BigDecimal totalPayments = deudas.stream()
+                    .flatMap(deuda -> pagoRepository.findByDeudaDeudaId(deuda.getDeudaId()).stream())
+                    .map(Pago::getMonto)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal totalDebt = deudas.stream()
+                    .map(Deuda::getMontoRestante)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal currentMonthDebt = deudas.stream()
+                    .filter(deuda -> {
+                        LocalDate vencimiento = deuda.getFechaVencimiento();
+                        LocalDate hoy = LocalDate.now();
+                        return vencimiento.getMonth() == hoy.getMonth() && vencimiento.getYear() == hoy.getYear();
+                    })
+                    .map(Deuda::getMontoRestante)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
             response.put("indicators", Map.of(
-                    "totalPayments", 5,
-                    "totalDebt", 150000,
-                    "currentMonthDebt", 50000,
-                    "lastTransaction", Map.of("date", "2024-12-01", "amount", 50000)
+                    "totalPayments", totalPayments,
+                    "totalDebt", totalDebt,
+                    "currentMonthDebt", currentMonthDebt,
+                    "lastTransaction", Map.of("date", "Sin datos", "amount", 0)
             ));
-            response.put("movements", List.of(
-                    Map.of("date", "2024-12-01", "type", "Ingreso", "amount", 50000, "description", "Pago mensual")
-            ));
-            response.put("alerts", List.of(
-                    Map.of("type", "warning", "title", "Pago pendiente", "message", "Tienes una deuda próxima a vencer", "date", "2024-12-10")
-            ));
+
+            // Movimientos
+            response.put("movements", deudas.stream()
+                    .flatMap(deuda -> pagoRepository.findByDeudaDeudaId(deuda.getDeudaId()).stream())
+                    .map(pago -> Map.of(
+                            "date", pago.getFechaTransaccion() != null ? pago.getFechaTransaccion().toString() : "Sin fecha",
+                            "type", "Pago",
+                            "amount", pago.getMonto(),
+                            "description", pago.getObservaciones() != null ? pago.getObservaciones() : "Sin descripción"
+                    ))
+                    .collect(Collectors.toList()));
 
             return ResponseEntity.ok(response);
         } else {

@@ -43,8 +43,4 @@ public class DeudaController {
         // Guardar la deuda
         return deudaRepository.save(deuda);
     }
-    @GetMapping("/{clienteId}/deudas")
-    public List<Deuda> obtenerDeudasPorCliente(@PathVariable Long clienteId) {
-        return deudaRepository.findByClienteClienteId(clienteId);
-    }
 }
