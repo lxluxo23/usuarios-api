@@ -31,4 +31,4 @@ volumes:
 
 networks:
   nextcloud_backend:
-    external: false
+    external: true
