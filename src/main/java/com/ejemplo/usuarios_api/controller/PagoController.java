@@ -9,9 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;  // Asegúrate de importar BigDecimal
-import java.math.RoundingMode;
-import java.time.LocalDate;
+import java.math.BigDecimal; // Para manejar valores monetarios con precisión
+import java.math.RoundingMode; // Para redondeo de valores
+import java.time.LocalDate; // Para trabajar con fechas
 import java.util.Optional;
 import java.util.List;
 
@@ -21,62 +21,61 @@ import java.util.List;
 public class PagoController {
 
     @Autowired
-    private PagoRepository pagoRepository;
+    private PagoRepository pagoRepository; // Inyección del repositorio de pagos
 
     @Autowired
-    private DeudaRepository deudaRepository;
+    private DeudaRepository deudaRepository; // Inyección del repositorio de deudas
 
     // Obtener todos los pagos
     @GetMapping
     public List<Pago> obtenerPagos() {
+        // Devuelve todos los pagos registrados en la base de datos
         return pagoRepository.findAll();
     }
 
-    // Crear un pago y asociarlo a una deuda específica
+    // Crear un nuevo pago y asociarlo a una deuda específica
     @PostMapping("/registrar/{deudaId}")
     public ResponseEntity<Pago> crearPago(@PathVariable Long deudaId, @RequestBody Pago pago) {
-        // Buscar la deuda por ID
+        // Busca la deuda por su ID
         Optional<Deuda> deudaOpt = deudaRepository.findById(deudaId);
 
         if (deudaOpt.isPresent()) {
             Deuda deuda = deudaOpt.get();
-            pago.setDeuda(deuda);  // Asocia el pago a la deuda encontrada
+            pago.setDeuda(deuda); // Asocia el pago a la deuda encontrada
 
-            // Asigna la fecha de transacción (fecha actual)
+            // Asigna la fecha de transacción si no está definida
             if (pago.getFechaTransaccion() == null) {
                 pago.setFechaTransaccion(LocalDate.now());
             }
 
-            // Convierte el monto recibido a BigDecimal si es necesario
+            // Convierte el monto recibido a BigDecimal si no lo es
             if (pago.getMonto() != null) {
-                // Si el monto es pasado como un String o Double, se convierte a BigDecimal
-                pago.setMonto(new BigDecimal(pago.getMonto().toString()));  // Asegura que el monto es un BigDecimal
+                pago.setMonto(new BigDecimal(pago.getMonto().toString())); // Asegura que el monto es un BigDecimal
             }
 
-            // Restar el monto del pago al monto restante de la deuda
+            // Resta el monto del pago al monto restante de la deuda
             BigDecimal nuevoMontoRestante = deuda.getMontoRestante().subtract(pago.getMonto());
 
-            // Redondear el resultado a 2 decimales para evitar errores de precisión
+            // Redondea el nuevo monto restante a 2 decimales
             nuevoMontoRestante = nuevoMontoRestante.setScale(2, RoundingMode.HALF_UP);
 
-            // Verificar el monto restante antes de la comparación
-            System.out.println("Nuevo monto restante: " + nuevoMontoRestante);
+            deuda.setMontoRestante(nuevoMontoRestante); // Actualiza el monto restante de la deuda
 
-            deuda.setMontoRestante(nuevoMontoRestante);
-
-            // Si el monto restante llega a cero o menos, cambiar el estado de la deuda a "Pagada"
+            // Cambia el estado de la deuda a "Pagada" si el monto restante es cero o negativo
             if (deuda.getMontoRestante().compareTo(BigDecimal.ZERO) <= 0) {
                 deuda.setEstadoDeuda(EstadoDeuda.Pagado);
             }
 
-            // Guarda la deuda actualizada
+            // Guarda la deuda actualizada en la base de datos
             deudaRepository.save(deuda);
 
-            // Guarda el pago asociado a la deuda
+            // Guarda el pago en la base de datos
             Pago pagoGuardado = pagoRepository.save(pago);
-            return ResponseEntity.ok(pagoGuardado); // Devuelve el pago guardado
+
+            // Retorna el pago guardado como respuesta
+            return ResponseEntity.ok(pagoGuardado);
         } else {
-            // Si no se encuentra la deuda, retorna un error 404
+            // Retorna un error 404 si no se encuentra la deuda
             return ResponseEntity.notFound().build();
         }
     }

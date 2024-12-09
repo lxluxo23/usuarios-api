@@ -10,7 +10,9 @@ public enum TipoDeuda {
     Impuesto_iva("Impuesto IVA"),
     Renta_2024("Renta 2024"),
     Multa("Multa"),
+    Honorario_contable ("Honorario Contable"),
     Imposiciones("Imposiciones");
+
 
     private final String value;
 

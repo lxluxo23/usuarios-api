@@ -27,13 +27,13 @@ import java.util.stream.Collectors;
 public class ClienteController {
 
     @Autowired
-    private ClienteRepository clienteRepository;
+    private ClienteRepository clienteRepository; // Inyeccion del repositorio de clientes
 
     @Autowired
-    private DeudaRepository deudaRepository;
+    private DeudaRepository deudaRepository; // Inyeccion del repositorio de deudas
 
     @Autowired
-    private PagoRepository pagoRepository;
+    private PagoRepository pagoRepository; // Inyeccion del repositorio de pagos
 
     // Obtener todos los clientes
     @GetMapping
@@ -47,8 +47,6 @@ public class ClienteController {
         return clienteRepository.save(cliente);
     }
 
-
-    // Obtener un cliente por su ID
     // Obtener deudas por ID
     @GetMapping("/{clienteId}/deudas")
     public List<Deuda> obtenerDeudasPorCliente(@PathVariable Long clienteId) {
@@ -64,14 +62,17 @@ public class ClienteController {
     // Obtener datos completos de un cliente para el dashboard
     @GetMapping("/{clienteId}")
     public ResponseEntity<Map<String, Object>> obtenerCliente(@PathVariable Long clienteId) {
+        //Obtener cliente por su ID
         Optional<Cliente> clienteOpt = clienteRepository.findById(clienteId);
 
         if (clienteOpt.isPresent()) {
             Cliente cliente = clienteOpt.get();
             List<Deuda> deudas = deudaRepository.findByCliente_ClienteId(clienteId);
 
-            // Datos del cliente
+            // Crear un mapa para estructurar la respuesta
             Map<String, Object> response = new HashMap<>();
+
+            //Agregar informacion basica del cliente
             response.put("summary", Map.of(
                     "nombre", cliente.getNombre(),
                     "rut", cliente.getRut(),
@@ -80,7 +81,7 @@ public class ClienteController {
                     "direccion", cliente.getDireccion()
             ));
 
-            // Indicadores
+            // Calcular indicadores financieros
             BigDecimal totalPayments = deudas.stream()
                     .flatMap(deuda -> pagoRepository.findByDeudaDeudaId(deuda.getDeudaId()).stream())
                     .map(Pago::getMonto)
@@ -106,7 +107,7 @@ public class ClienteController {
                     "lastTransaction", Map.of("date", "Sin datos", "amount", 0)
             ));
 
-            // Movimientos
+            // Agregar movimientos (pagos realizados)
             response.put("movements", deudas.stream()
                     .flatMap(deuda -> pagoRepository.findByDeudaDeudaId(deuda.getDeudaId()).stream())
                     .map(pago -> Map.of(
@@ -117,10 +118,64 @@ public class ClienteController {
                     ))
                     .collect(Collectors.toList()));
 
+            // Retornar respuesta
+            return ResponseEntity.ok(response);
+        } else {
+            // Retorna error si el cliente no se encuentra
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Cliente no encontrado"));
+        }
+    }
+    @GetMapping("/{clienteId}/finanzas")
+    public ResponseEntity<Map<String, Object>> obtenerFinanzasPorCliente(@PathVariable Long clienteId) {
+        Optional<Cliente> clienteOpt = clienteRepository.findById(clienteId);
+
+        if (clienteOpt.isPresent()) {
+            Cliente cliente = clienteOpt.get();
+            List<Deuda> deudas = deudaRepository.findByCliente_ClienteId(clienteId);
+            List<Pago> pagos = pagoRepository.findPagosByClienteId(clienteId);
+
+            // Calcular total pagado
+            BigDecimal totalPayments = pagos.stream()
+                    .map(Pago::getMonto)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // Calcular deuda total
+            BigDecimal totalDebt = deudas.stream()
+                    .map(Deuda::getMontoRestante)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // Calcular pagos pendientes (deudas no pagadas)
+            long pendingPayments = deudas.stream()
+                    .filter(deuda -> deuda.getMontoRestante().compareTo(BigDecimal.ZERO) > 0)
+                    .count();
+
+            // Determinar próxima fecha de vencimiento
+            LocalDate nextDueDate = deudas.stream()
+                    .map(Deuda::getFechaVencimiento)
+                    .filter(Objects::nonNull)
+                    .min(LocalDate::compareTo)
+                    .orElse(null);
+
+            // Crear respuesta consolidada
+            Map<String, Object> response = new HashMap<>();
+            response.put("totalPayments", totalPayments);
+            response.put("totalDebt", totalDebt);
+            response.put("pendingPayments", pendingPayments);
+            response.put("nextDueDate", nextDueDate != null ? nextDueDate.toString() : "Sin fechas próximas");
+            response.put("movements", pagos.stream()
+                    .map(pago -> Map.of(
+                            "amount", pago.getMonto(),
+                            "date", pago.getFechaTransaccion() != null ? pago.getFechaTransaccion().toString() : "Sin fecha",
+                            "description", pago.getObservaciones() != null ? pago.getObservaciones() : "Sin descripción"
+                    ))
+                    .collect(Collectors.toList())
+            );
+
             return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Cliente no encontrado"));
         }
     }
+
 
 }
