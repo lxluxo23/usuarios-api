@@ -6,6 +6,7 @@ import com.ejemplo.usuarios_api.model.Pago;
 import com.ejemplo.usuarios_api.repository.ClienteRepository;
 import com.ejemplo.usuarios_api.repository.DeudaRepository;
 import com.ejemplo.usuarios_api.repository.PagoRepository;
+import com.ejemplo.usuarios_api.service.ClienteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,9 @@ public class ClienteController {
     private DeudaRepository deudaRepository; // Inyeccion del repositorio de deudas
 
     @Autowired
+    private ClienteService clienteService; // Inyección del servicio
+
+    @Autowired
     private PagoRepository pagoRepository; // Inyeccion del repositorio de pagos
 
     private static final NumberFormat formatoCLP = NumberFormat.getInstance(new Locale("es", "CL"));
@@ -47,8 +51,15 @@ public class ClienteController {
 
     // Crear un nuevo cliente
     @PostMapping
-    public Cliente crearCliente(@RequestBody Cliente cliente) {
-        return clienteRepository.save(cliente);
+    public ResponseEntity<?> crearCliente(@RequestBody Cliente cliente) {
+        try {
+            Cliente nuevoCliente = clienteService.crearCliente(cliente);
+            return ResponseEntity.status(HttpStatus.CREATED).body(nuevoCliente);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Error interno al crear el cliente."));
+        }
     }
 
     // Obtener deudas por ID
