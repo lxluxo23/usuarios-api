@@ -6,9 +6,15 @@ import com.ejemplo.usuarios_api.repository.DeudaRepository;
 import com.ejemplo.usuarios_api.repository.PagoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin(origins = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
@@ -16,38 +22,108 @@ import java.util.List;
 public class DeudaController {
 
     @Autowired
-    private DeudaRepository deudaRepository; // Inyección del repositorio de deudas
+    private DeudaRepository deudaRepository;
 
     @Autowired
-    private ClienteRepository clienteRepository; // Inyección del repositorio de clientes
+    private ClienteRepository clienteRepository;
 
     @Autowired
-    private PagoRepository pagoRepository; // Inyección de PagoRepository
+    private PagoRepository pagoRepository;
+
+    private static final NumberFormat formatoCLP = NumberFormat.getInstance(new Locale("es", "CL"));
 
     // Obtener todas las deudas
     @GetMapping
-    public List<Deuda> obtenerDeudas() {
-        // Devuelve todas las deudas registradas
-        return deudaRepository.findAll();
+    public List<Map<String, Object>> obtenerDeudas() {
+        return deudaRepository.findAll().stream().map(deuda -> {
+            Map<String, Object> deudaInfo = new HashMap<>();
+            deudaInfo.put("deudaId", deuda.getDeudaId());
+            deudaInfo.put("cliente", deuda.getCliente().getNombre());
+            deudaInfo.put("montoTotal", formatoCLP.format(deuda.getMontoTotal()));
+            deudaInfo.put("montoRestante", formatoCLP.format(deuda.getMontoRestante()));
+            deudaInfo.put("fechaVencimiento", deuda.getFechaVencimiento() != null ? deuda.getFechaVencimiento().toString() : "Sin fecha");
+            deudaInfo.put("fechaCreacion", deuda.getFechaCreacion() != null ? deuda.getFechaCreacion().toString() : "No registrada");
+            deudaInfo.put("tipoDeuda", deuda.getTipoDeuda() != null ? deuda.getTipoDeuda() : "Sin tipo");
+            deudaInfo.put("observaciones", deuda.getObservaciones() != null ? deuda.getObservaciones() : "Sin observaciones");
+            deudaInfo.put("estado", deuda.getEstadoDeuda());
+            return deudaInfo;
+        }).collect(Collectors.toList());
     }
 
     // Crear una nueva deuda
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Deuda crearDeuda(@RequestBody Deuda deuda) {
-        // Valida que la deuda tenga un cliente asociado
-        if (deuda.getCliente() == null || deuda.getCliente().getClienteId() == null) {
-            throw new IllegalArgumentException("El cliente asociado a la deuda es requerido.");
+    public ResponseEntity<?> crearDeuda(@RequestBody Deuda deuda) {
+        try {
+            if (deuda.getCliente() == null || deuda.getCliente().getClienteId() == null) {
+                throw new IllegalArgumentException("El cliente asociado a la deuda es requerido.");
+            }
+
+            Cliente cliente = clienteRepository.findById(deuda.getCliente().getClienteId())
+                    .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado con ID: " + deuda.getCliente().getClienteId()));
+
+            deuda.setCliente(cliente);
+
+            if (deuda.getMontoTotal() == null || deuda.getMontoTotal().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("El monto total de la deuda debe ser mayor a 0.");
+            }
+
+            if (deuda.getFechaInicio() == null) {
+                throw new IllegalArgumentException("La fecha de inicio es requerida.");
+            }
+
+            deuda.setMontoRestante(deuda.getMontoTotal().setScale(2, RoundingMode.HALF_UP));
+            deuda.setEstadoDeuda(EstadoDeuda.Pendiente);
+
+            if (deuda.getFechaCreacion() == null) {
+                deuda.setFechaCreacion(LocalDate.now());
+            }
+
+            Deuda deudaGuardada = deudaRepository.save(deuda);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                    "message", "Deuda creada con éxito.",
+                    "deuda", Map.of(
+                            "deudaId", deudaGuardada.getDeudaId(),
+                            "montoTotal", formatoCLP.format(deudaGuardada.getMontoTotal()),
+                            "montoRestante", formatoCLP.format(deudaGuardada.getMontoRestante()),
+                            "fechaCreacion", deudaGuardada.getFechaCreacion().toString(),
+                            "fechaInicio", deudaGuardada.getFechaInicio().toString(),
+                            "fechaVencimiento", deudaGuardada.getFechaVencimiento() != null ? deudaGuardada.getFechaVencimiento().toString() : "Sin fecha",
+                            "tipoDeuda", deudaGuardada.getTipoDeuda() != null ? deudaGuardada.getTipoDeuda() : "Sin tipo",
+                            "observaciones", deudaGuardada.getObservaciones() != null ? deudaGuardada.getObservaciones() : "Sin observaciones",
+                            "estado", deudaGuardada.getEstadoDeuda()
+                    )
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Error al crear la deuda: " + e.getMessage()));
         }
+    }
 
-        // Busca al cliente asociado a la deuda
-        Cliente cliente = clienteRepository.findById(deuda.getCliente().getClienteId())
-                .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado con ID: " + deuda.getCliente().getClienteId()));
+    // Obtener detalles de una deuda por ID
+    @GetMapping("/{deudaId}")
+    public ResponseEntity<?> obtenerDeuda(@PathVariable Long deudaId) {
+        Optional<Deuda> deudaOpt = deudaRepository.findById(deudaId);
 
-        // Asigna el cliente encontrado a la deuda
-        deuda.setCliente(cliente);
+        if (deudaOpt.isPresent()) {
+            Deuda deuda = deudaOpt.get();
+            Map<String, Object> deudaInfo = new HashMap<>();
+            deudaInfo.put("deudaId", deuda.getDeudaId());
+            deudaInfo.put("cliente", deuda.getCliente().getNombre());
+            deudaInfo.put("montoTotal", formatoCLP.format(deuda.getMontoTotal()));
+            deudaInfo.put("montoRestante", formatoCLP.format(deuda.getMontoRestante()));
+            deudaInfo.put("fechaVencimiento", deuda.getFechaVencimiento() != null ? deuda.getFechaVencimiento().toString() : "Sin fecha");
+            deudaInfo.put("fechaCreacion", deuda.getFechaCreacion() != null ? deuda.getFechaCreacion().toString() : "No registrada");
+            deudaInfo.put("fechaInicio", deuda.getFechaInicio() != null ? deuda.getFechaInicio().toString() : "No registrada");
+            deudaInfo.put("tipoDeuda", deuda.getTipoDeuda() != null ? deuda.getTipoDeuda() : "Sin tipo");
+            deudaInfo.put("observaciones", deuda.getObservaciones() != null ? deuda.getObservaciones() : "Sin observaciones");
+            deudaInfo.put("estado", deuda.getEstadoDeuda());
 
-        // Guarda la deuda en la base de datos
-        return deudaRepository.save(deuda);
+            return ResponseEntity.ok(deudaInfo);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Deuda no encontrada."));
+        }
     }
 }

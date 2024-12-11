@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.RoundingMode;
+import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +36,8 @@ public class ClienteController {
 
     @Autowired
     private PagoRepository pagoRepository; // Inyeccion del repositorio de pagos
+
+    private static final NumberFormat formatoCLP = NumberFormat.getInstance(new Locale("es", "CL"));
 
     // Obtener todos los clientes
     @GetMapping
@@ -62,17 +66,15 @@ public class ClienteController {
     // Obtener datos completos de un cliente para el dashboard
     @GetMapping("/{clienteId}")
     public ResponseEntity<Map<String, Object>> obtenerCliente(@PathVariable Long clienteId) {
-        //Obtener cliente por su ID
         Optional<Cliente> clienteOpt = clienteRepository.findById(clienteId);
 
         if (clienteOpt.isPresent()) {
             Cliente cliente = clienteOpt.get();
             List<Deuda> deudas = deudaRepository.findByCliente_ClienteId(clienteId);
 
-            // Crear un mapa para estructurar la respuesta
             Map<String, Object> response = new HashMap<>();
 
-            //Agregar informacion basica del cliente
+            // Informacion basica del cliente
             response.put("summary", Map.of(
                     "nombre", cliente.getNombre(),
                     "rut", cliente.getRut(),
@@ -85,11 +87,13 @@ public class ClienteController {
             BigDecimal totalPayments = deudas.stream()
                     .flatMap(deuda -> pagoRepository.findByDeudaDeudaId(deuda.getDeudaId()).stream())
                     .map(Pago::getMonto)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .setScale(2, RoundingMode.HALF_UP);
 
             BigDecimal totalDebt = deudas.stream()
                     .map(Deuda::getMontoRestante)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .setScale(2, RoundingMode.HALF_UP);
 
             BigDecimal currentMonthDebt = deudas.stream()
                     .filter(deuda -> {
@@ -98,33 +102,33 @@ public class ClienteController {
                         return vencimiento.getMonth() == hoy.getMonth() && vencimiento.getYear() == hoy.getYear();
                     })
                     .map(Deuda::getMontoRestante)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .setScale(2, RoundingMode.HALF_UP);
 
             response.put("indicators", Map.of(
-                    "totalPayments", totalPayments,
-                    "totalDebt", totalDebt,
-                    "currentMonthDebt", currentMonthDebt,
+                    "totalPayments", formatoCLP.format(totalPayments),
+                    "totalDebt", formatoCLP.format(totalDebt),
+                    "currentMonthDebt", formatoCLP.format(currentMonthDebt),
                     "lastTransaction", Map.of("date", "Sin datos", "amount", 0)
             ));
 
-            // Agregar movimientos (pagos realizados)
+            // Movimientos (pagos realizados)
             response.put("movements", deudas.stream()
                     .flatMap(deuda -> pagoRepository.findByDeudaDeudaId(deuda.getDeudaId()).stream())
                     .map(pago -> Map.of(
                             "date", pago.getFechaTransaccion() != null ? pago.getFechaTransaccion().toString() : "Sin fecha",
                             "type", "Pago",
-                            "amount", pago.getMonto(),
+                            "amount", formatoCLP.format(pago.getMonto()),
                             "description", pago.getObservaciones() != null ? pago.getObservaciones() : "Sin descripción"
                     ))
                     .collect(Collectors.toList()));
 
-            // Retornar respuesta
             return ResponseEntity.ok(response);
         } else {
-            // Retorna error si el cliente no se encuentra
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Cliente no encontrado"));
         }
     }
+
     @GetMapping("/{clienteId}/finanzas")
     public ResponseEntity<Map<String, Object>> obtenerFinanzasPorCliente(@PathVariable Long clienteId) {
         Optional<Cliente> clienteOpt = clienteRepository.findById(clienteId);
@@ -134,48 +138,42 @@ public class ClienteController {
             List<Deuda> deudas = deudaRepository.findByCliente_ClienteId(clienteId);
             List<Pago> pagos = pagoRepository.findPagosByClienteId(clienteId);
 
-            // Calcular total pagado
             BigDecimal totalPayments = pagos.stream()
                     .map(Pago::getMonto)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .setScale(2, RoundingMode.HALF_UP);
 
-            // Calcular deuda total
             BigDecimal totalDebt = deudas.stream()
                     .map(Deuda::getMontoRestante)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .setScale(2, RoundingMode.HALF_UP);
 
-            // Calcular pagos pendientes (deudas no pagadas)
             long pendingPayments = deudas.stream()
                     .filter(deuda -> deuda.getMontoRestante().compareTo(BigDecimal.ZERO) > 0)
                     .count();
 
-            // Determinar próxima fecha de vencimiento
             LocalDate nextDueDate = deudas.stream()
                     .map(Deuda::getFechaVencimiento)
                     .filter(Objects::nonNull)
                     .min(LocalDate::compareTo)
                     .orElse(null);
 
-            // Crear respuesta consolidada
             Map<String, Object> response = new HashMap<>();
-            response.put("totalPayments", totalPayments);
-            response.put("totalDebt", totalDebt);
+            response.put("totalPayments", formatoCLP.format(totalPayments));
+            response.put("totalDebt", formatoCLP.format(totalDebt));
             response.put("pendingPayments", pendingPayments);
             response.put("nextDueDate", nextDueDate != null ? nextDueDate.toString() : "Sin fechas próximas");
             response.put("movements", pagos.stream()
                     .map(pago -> Map.of(
-                            "amount", pago.getMonto(),
+                            "amount", formatoCLP.format(pago.getMonto()),
                             "date", pago.getFechaTransaccion() != null ? pago.getFechaTransaccion().toString() : "Sin fecha",
                             "description", pago.getObservaciones() != null ? pago.getObservaciones() : "Sin descripción"
                     ))
-                    .collect(Collectors.toList())
-            );
+                    .collect(Collectors.toList()));
 
             return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Cliente no encontrado"));
         }
     }
-
-
 }
