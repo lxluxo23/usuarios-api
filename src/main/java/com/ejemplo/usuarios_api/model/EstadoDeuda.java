@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 public enum EstadoDeuda {
     Pendiente,
     Pagado,
+    Parcialmente_Pagado,
     Vencido;
 
     @JsonCreator

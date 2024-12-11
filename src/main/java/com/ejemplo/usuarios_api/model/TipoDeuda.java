@@ -4,14 +4,14 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum TipoDeuda {
-    Impuesto("Impuesto"),
-    Honorario("Honorario"),
-    Honorario_renta_at("Honorario Renta AT"),
-    Impuesto_iva("Impuesto IVA"),
-    Renta_2024("Renta 2024"),
-    Multa("Multa"),
-    Honorario_contable ("Honorario Contable"),
-    Imposiciones("Imposiciones");
+    Imposiciones ("Imposiciones"),
+    Impuesto_iva ("Impuesto IVA"),
+    Talonarios ("Talonarios"),
+    Multas ("Multas"),
+    Impuesto_Renta ("Impuesto Renta"),
+    Contribuciones ("Contribuciones"),
+    Otros ("Otros"),
+    Honorario_contable ("Honorario Contable"); //Listo
 
 
     private final String value;

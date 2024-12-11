@@ -31,12 +31,15 @@ public class Pago {
 
     @Enumerated(EnumType.STRING) // Almacena el valor del enumerado como una cadena de texto en la base de datos
     @Column(name = "metodo_pago") // Especifica la columna "metodo_pago"
-    private MetodoPago metodoPago; // Método de pago (e.g., Tarjeta, Transferencia)
+    private MetodoPago metodoPago; // Metodo de pago (e.g., Tarjeta, Transferencia)
 
     @Lob // Indica que este campo almacena datos binarios grandes
     private byte[] comprobante; // Comprobante de la transacción (puede ser un archivo escaneado)
 
     private String observaciones; // Notas adicionales sobre el pago
+
+    @Column(nullable = false)
+    private int mes;
 
     // Getters y Setters para acceder y modificar los campos
 
@@ -103,4 +106,14 @@ public class Pago {
     public void setObservaciones(String observaciones) {
         this.observaciones = observaciones;
     }
+
+    public int getMes() {
+        return mes;
+    }
+
+    public void setMes(int mes) {
+        this.mes = mes;
+    }
+
 }
+
