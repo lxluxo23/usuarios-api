@@ -225,4 +225,48 @@ public class HonorarioController {
                     .body("Error al obtener detalles: " + e.getMessage());
         }
     }
+    //obtener honorarios por cleitne
+    @GetMapping("/cliente/{clienteId}")
+    public ResponseEntity<List<Map<String, Object>>> obtenerHonorariosPorCliente(@PathVariable Long clienteId) {
+        try {
+            // Obtener los honorarios contables del cliente
+            List<HonorarioContable> honorarios = honorarioRepository.findByCliente_ClienteId(clienteId);
+            if (honorarios.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Collections.singletonList(Collections.singletonMap("message", "No se encontraron honorarios para este cliente.")));
+            }
+
+            // Preparar la respuesta
+            List<Map<String, Object>> respuesta = new ArrayList<>();
+            for (HonorarioContable honorario : honorarios) {
+                Map<String, Object> honorarioMap = new HashMap<>();
+                honorarioMap.put("honorarioId", honorario.getHonorarioId());
+                honorarioMap.put("montoMensual", honorario.getMontoMensual());
+                honorarioMap.put("anio", honorario.getAnio());
+
+                // Obtener los meses asociados al honorario
+                List<Map<String, Object>> meses = mesHonorarioRepository
+                        .findByHonorario_HonorarioId(honorario.getHonorarioId())
+                        .stream()
+                        .map(mes -> {
+                            Map<String, Object> mesMap = new HashMap<>();
+                            mesMap.put("mes", mes.getMes());
+                            mesMap.put("montoMensual", mes.getMontoMensual());
+                            mesMap.put("montoPagado", mes.getMontoPagado());
+                            mesMap.put("estado", mes.getEstado().toString());
+                            return mesMap;
+                        })
+                        .collect(Collectors.toList());
+
+                honorarioMap.put("meses", meses);
+                respuesta.add(honorarioMap);
+            }
+
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonList(Collections.singletonMap("error", "Error al cargar honorarios: " + e.getMessage())));
+        }
+    }
+
 }
