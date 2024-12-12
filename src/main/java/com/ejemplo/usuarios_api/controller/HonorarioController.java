@@ -1,5 +1,6 @@
 package com.ejemplo.usuarios_api.controller;
 
+import com.ejemplo.usuarios_api.dto.HonorarioRequest;
 import com.ejemplo.usuarios_api.model.*;
 import com.ejemplo.usuarios_api.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,11 +38,13 @@ public class HonorarioController {
     @PostMapping("/{clienteId}")
     public ResponseEntity<?> crearHonorarioContable(
             @PathVariable Long clienteId,
-            @RequestParam("montoMensual") BigDecimal montoMensual,
-            @RequestParam(value = "mesesPagados", required = false) List<MultipartFile> mesesPagados,
-            @RequestParam Map<String, String> allParams) {
+            @RequestBody HonorarioRequest honorarioRequest) {
 
         try {
+            // Extraer datos del cuerpo de la solicitud
+            BigDecimal montoMensual = honorarioRequest.getMontoMensual();
+            List<HonorarioRequest.MesPago> mesesPagados = honorarioRequest.getMesesPagados();
+
             // Verificar si el cliente existe
             Cliente cliente = clienteRepository.findById(clienteId)
                     .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
@@ -78,77 +81,25 @@ public class HonorarioController {
                 mesesHonorarios.add(mesHonorario);
             }
 
-            // Preparar archivos por mes (si existen)
-            Map<Integer, MultipartFile> archivosPorMes = new HashMap<>();
-            if (mesesPagados != null) {
-                for (MultipartFile archivo : mesesPagados) {
-                    String nombreArchivo = archivo.getOriginalFilename();
-                    if (nombreArchivo != null) {
-                        String[] partes = nombreArchivo.split("_", 2);
-                        if (partes.length > 1) {
-                            int mesNumerico = Integer.parseInt(partes[0]);
-                            archivosPorMes.put(mesNumerico, archivo);
-                        }
-                    }
-                }
-            }
+            // Registrar pagos de los meses enviados en la solicitud
+            if (mesesPagados != null && !mesesPagados.isEmpty()) {
+                for (HonorarioRequest.MesPago mesPago : mesesPagados) {
+                    MesHonorario mesHonorario = mesesHonorarios.get(mesPago.getMes() - 1);
 
-            // Procesar pagos
-            BigDecimal totalPagado = BigDecimal.ZERO;
-
-            for (int mes = 1; mes <= 12; mes++) {
-                MesHonorario mesHonorario = mesesHonorarios.get(mes - 1);
-
-                // Buscar si hay un monto pagado para este mes
-                String claveMonto = "montoPagado[" + mes + "]";
-                BigDecimal montoPagadoMes = BigDecimal.ZERO;
-
-                if (allParams.containsKey(claveMonto)) {
-                    try {
-                        String valor = allParams.get(claveMonto);
-                        if (valor != null && !valor.trim().isEmpty()) {
-                            montoPagadoMes = new BigDecimal(valor);
-                        }
-                    } catch (NumberFormatException e) {
-                        // Si el monto no es válido, ignoramos este mes
-                        continue;
-                    }
-                }
-
-                if (montoPagadoMes.compareTo(BigDecimal.ZERO) > 0) {
                     // Registrar el pago
-                    PagoHonorario pagoHonorario = new PagoHonorario();
-                    pagoHonorario.setMesHonorario(mesHonorario);
-                    pagoHonorario.setMonto(montoPagadoMes);
-                    pagoHonorario.setFechaPago(LocalDate.now());
+                    PagoHonorario nuevoPago = new PagoHonorario();
+                    nuevoPago.setMesHonorario(mesHonorario);
+                    nuevoPago.setMonto(montoMensual); // Aquí puedes ajustar según el monto real pagado si es diferente
+                    nuevoPago.setFechaPago(LocalDate.now());
+                    nuevoPago.setComprobante(mesPago.getComprobante());
+                    pagoHonorarioRepository.save(nuevoPago);
 
-                    // Asociar comprobante si existe
-                    if (archivosPorMes.containsKey(mes)) {
-                        MultipartFile archivoMes = archivosPorMes.get(mes);
-                        pagoHonorario.setComprobante(archivoMes.getOriginalFilename());
-                    }
-
-                    pagoHonorarioRepository.save(pagoHonorario);
-
-                    // Actualizar monto pagado del mes
-                    mesHonorario.setMontoPagado(mesHonorario.getMontoPagado().add(montoPagadoMes));
-
-                    // Actualizar estado del mes
-                    if (mesHonorario.getMontoPagado().compareTo(mesHonorario.getMontoMensual()) >= 0) {
-                        mesHonorario.setEstado(EstadoDeuda.Pagado);
-                    } else {
-                        mesHonorario.setEstado(EstadoDeuda.Pendiente); // Se mantiene pendiente si no está completamente pagado
-                    }
-
+                    // Actualizar el estado del mes
+                    mesHonorario.setMontoPagado(montoMensual);
+                    mesHonorario.setEstado(EstadoDeuda.Pagado);
                     mesHonorarioRepository.save(mesHonorario);
-
-                    // Sumar al total pagado del honorario
-                    totalPagado = totalPagado.add(montoPagadoMes);
                 }
             }
-
-            // Actualizar el honorario con el total pagado
-            honorarioGuardado.setMontoPagado(totalPagado);
 
             // Verificar si todos los meses están pagados
             boolean todosPagados = mesHonorarioRepository.findByHonorario_HonorarioId(honorarioGuardado.getHonorarioId())
@@ -159,6 +110,7 @@ public class HonorarioController {
                 honorarioGuardado.setEstado(EstadoDeuda.Pagado);
             }
 
+            // Guardar el estado final del honorario
             honorarioRepository.save(honorarioGuardado);
 
             return ResponseEntity.ok(Collections.singletonMap("message", "Honorario contable creado con éxito."));
