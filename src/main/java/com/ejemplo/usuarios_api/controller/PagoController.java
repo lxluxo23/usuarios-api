@@ -80,7 +80,6 @@ public class PagoController {
     public ResponseEntity<?> crearPago(@PathVariable Long deudaId, @RequestBody Pago pago) {
         try {
             Optional<Deuda> deudaOpt = deudaRepository.findById(deudaId);
-
             if (deudaOpt.isEmpty()) {
                 throw new IllegalArgumentException("Deuda no encontrada con ID: " + deudaId);
             }
@@ -112,12 +111,7 @@ public class PagoController {
 
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "message", "Pago registrado con éxito.",
-                    "pago", Map.of(
-                            "pagoId", pagoGuardado.getPagoId(),
-                            "monto", formatoCLP.format(pagoGuardado.getMonto()),
-                            "fechaTransaccion", pagoGuardado.getFechaTransaccion().toString(),
-                            "observaciones", pagoGuardado.getObservaciones() != null ? pagoGuardado.getObservaciones() : "Sin observaciones"
-                    )
+                    "pago", pagoGuardado
             ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));

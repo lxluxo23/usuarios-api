@@ -126,4 +126,39 @@ public class DeudaController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Deuda no encontrada."));
         }
     }
+    @GetMapping("/usuario/{clienteId}")
+    public ResponseEntity<?> obtenerDeudasPorUsuario(@PathVariable Long clienteId) {
+        List<Map<String, Object>> deudas = deudaRepository.findAllByClienteClienteId(clienteId).stream().map(deuda -> {
+            Map<String, Object> deudaInfo = new HashMap<>();
+            deudaInfo.put("deudaId", deuda.getDeudaId());
+            deudaInfo.put("cliente", deuda.getCliente().getNombre());
+            deudaInfo.put("montoTotal", formatoCLP.format(deuda.getMontoTotal()));
+            deudaInfo.put("montoRestante", formatoCLP.format(deuda.getMontoRestante()));
+            deudaInfo.put("fechaVencimiento", deuda.getFechaVencimiento() != null ? deuda.getFechaVencimiento().toString() : "Sin fecha");
+            deudaInfo.put("fechaCreacion", deuda.getFechaCreacion() != null ? deuda.getFechaCreacion().toString() : "No registrada");
+            deudaInfo.put("tipoDeuda", deuda.getTipoDeuda() != null ? deuda.getTipoDeuda() : "Sin tipo");
+            deudaInfo.put("observaciones", deuda.getObservaciones() != null ? deuda.getObservaciones() : "Sin observaciones");
+            deudaInfo.put("estado", deuda.getEstadoDeuda());
+            return deudaInfo;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(deudas);
+    }
+    @GetMapping("/usuario/{clienteId}/pendientes")
+    public ResponseEntity<?> obtenerDeudasPendientesPorUsuario(@PathVariable Long clienteId) {
+        List<Map<String, Object>> deudasPendientes = deudaRepository.findAllByClienteClienteId(clienteId).stream()
+                .filter(deuda -> deuda.getEstadoDeuda().equals(EstadoDeuda.Pendiente)) // Solo deudas pendientes
+                .map(deuda -> {
+                    Map<String, Object> deudaInfo = new HashMap<>();
+                    deudaInfo.put("deudaId", deuda.getDeudaId());
+                    deudaInfo.put("descripcion", String.format("%s - Monto restante: %s",
+                            deuda.getTipoDeuda(), formatoCLP.format(deuda.getMontoRestante())));
+                    return deudaInfo;
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(deudasPendientes);
+    }
+
+
 }

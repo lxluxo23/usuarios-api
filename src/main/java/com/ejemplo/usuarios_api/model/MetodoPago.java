@@ -3,10 +3,10 @@ package com.ejemplo.usuarios_api.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 public enum MetodoPago {
-    TARJETA_CREDITO,
-    TRANSFERENCIA,
-    EFECTIVO,
-    PAYPAL;
+    Tarjeta,
+    Transferencia,
+    Efectivo,
+    Cheque;
 
     @JsonCreator
     public static EstadoDeuda fromString(String value) {
