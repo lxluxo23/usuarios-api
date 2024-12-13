@@ -6,7 +6,7 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-public class CorsConfig implements WebMvcConfigurer {
+public class CorsConfig implements  WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
@@ -17,3 +17,4 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowCredentials(false); // No se permite el uso de cookies (si lo necesitas, ponlo en true)
     }
 }
+
