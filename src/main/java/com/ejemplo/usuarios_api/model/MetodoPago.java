@@ -9,7 +9,7 @@ public enum MetodoPago {
     Cheque;
 
     @JsonCreator
-    public static EstadoDeuda fromString(String value) {
-        return EstadoDeuda.valueOf(value.toUpperCase());
+    public static MetodoPago fromString(String value) {
+        return MetodoPago.valueOf(value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase());
     }
 }
