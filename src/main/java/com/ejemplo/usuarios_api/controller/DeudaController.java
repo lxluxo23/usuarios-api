@@ -146,19 +146,25 @@ public class DeudaController {
     }
     @GetMapping("/usuario/{clienteId}/pendientes")
     public ResponseEntity<?> obtenerDeudasPendientesPorUsuario(@PathVariable Long clienteId) {
-        List<Map<String, Object>> deudasPendientes = deudaRepository.findAllByClienteClienteId(clienteId).stream()
-                .filter(deuda -> deuda.getEstadoDeuda().equals(EstadoDeuda.Pendiente)) // Solo deudas pendientes
-                .map(deuda -> {
-                    Map<String, Object> deudaInfo = new HashMap<>();
-                    deudaInfo.put("deudaId", deuda.getDeudaId());
-                    deudaInfo.put("descripcion", String.format("%s - Monto restante: %s",
-                            deuda.getTipoDeuda(), formatoCLP.format(deuda.getMontoRestante())));
-                    return deudaInfo;
-                })
-                .collect(Collectors.toList());
+        try {
+            List<Map<String, Object>> deudasPendientes = deudaRepository.findAllByClienteClienteId(clienteId).stream()
+                    .filter(deuda -> deuda.getEstadoDeuda().equals(EstadoDeuda.Pendiente)) // Solo deudas pendientes
+                    .map(deuda -> {
+                        Map<String, Object> deudaInfo = new HashMap<>();
+                        deudaInfo.put("deudaId", deuda.getDeudaId());
+                        deudaInfo.put("descripcion", String.format("%s - Monto restante: %s",
+                                deuda.getTipoDeuda(), formatoCLP.format(deuda.getMontoRestante())));
+                        return deudaInfo;
+                    })
+                    .collect(Collectors.toList());
 
-        return ResponseEntity.ok(deudasPendientes);
+            return ResponseEntity.ok(deudasPendientes);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al obtener las deudas: " + e.getMessage()));
+        }
     }
+
 
 
 }

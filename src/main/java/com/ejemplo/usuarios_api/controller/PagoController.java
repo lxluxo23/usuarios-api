@@ -81,26 +81,25 @@ public class PagoController {
         try {
             Optional<Deuda> deudaOpt = deudaRepository.findById(deudaId);
             if (deudaOpt.isEmpty()) {
-                throw new IllegalArgumentException("Deuda no encontrada con ID: " + deudaId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "Deuda no encontrada con ID: " + deudaId));
             }
 
             Deuda deuda = deudaOpt.get();
             pago.setDeuda(deuda);
 
             if (pago.getMonto() == null || pago.getMonto().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("El monto del pago debe ser mayor a 0.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "El monto del pago debe ser mayor a 0."));
             }
 
             if (pago.getMonto().compareTo(deuda.getMontoRestante()) > 0) {
-                throw new IllegalArgumentException("El monto del pago no puede exceder el monto restante de la deuda.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "El monto del pago no puede exceder el monto restante de la deuda."));
             }
 
-            if (pago.getFechaTransaccion() == null) {
-                pago.setFechaTransaccion(LocalDate.now());
-            }
-
-            BigDecimal nuevoMontoRestante = deuda.getMontoRestante().subtract(pago.getMonto()).setScale(2, RoundingMode.HALF_UP);
-            deuda.setMontoRestante(nuevoMontoRestante);
+            pago.setFechaTransaccion(Optional.ofNullable(pago.getFechaTransaccion()).orElse(LocalDate.now()));
+            deuda.setMontoRestante(deuda.getMontoRestante().subtract(pago.getMonto()).setScale(2, RoundingMode.HALF_UP));
 
             if (deuda.getMontoRestante().compareTo(BigDecimal.ZERO) <= 0) {
                 deuda.setEstadoDeuda(EstadoDeuda.Pagado);
@@ -113,10 +112,9 @@ public class PagoController {
                     "message", "Pago registrado con éxito.",
                     "pago", pagoGuardado
             ));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Error al registrar el pago: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al registrar el pago: " + e.getMessage()));
         }
     }
 }
