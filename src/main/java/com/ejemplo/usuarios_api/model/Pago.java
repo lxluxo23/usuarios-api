@@ -2,8 +2,9 @@ package com.ejemplo.usuarios_api.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import java.math.BigDecimal; // Para manejar valores monetarios
-import java.time.LocalDate; // Para manejar fechas
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "pago")
@@ -16,7 +17,7 @@ public class Pago {
 
     @ManyToOne
     @JoinColumn(name = "deuda_id", nullable = false)
-    @JsonBackReference
+    @JsonBackReference // Evita serialización recursiva hacia Deuda
     private Deuda deuda;
 
     @Column(name = "fecha_transaccion", nullable = false)
@@ -26,20 +27,20 @@ public class Pago {
     private BigDecimal monto;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "metodo_pago")
+    @Column(name = "metodo_pago", nullable = false)
     private MetodoPago metodoPago;
 
     @Lob
+    @Column(name = "comprobante")
     private byte[] comprobante;
 
+    @Column(name = "observaciones")
     private String observaciones;
 
-    @Column(nullable = false)
+    @Column(name = "mes", nullable = false)
     private int mes;
 
-
-    // Getters y Setters para acceder y modificar los campos
-
+    // Getters y Setters
     public Long getPagoId() {
         return pagoId;
     }
@@ -103,6 +104,4 @@ public class Pago {
     public void setMes(int mes) {
         this.mes = mes;
     }
-
 }
-

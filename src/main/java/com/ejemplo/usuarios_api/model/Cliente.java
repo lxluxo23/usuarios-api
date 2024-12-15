@@ -2,27 +2,28 @@ package com.ejemplo.usuarios_api.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+
+import java.util.ArrayList;
 import java.util.List;
 
-@Entity // Marca la clase como una entidad de JPA, representando una tabla en la base de datos
+@Entity
 public class Cliente {
 
-    @Id // Indica que este campo es la clave primaria
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Autogeneración del valor para la clave primaria
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long clienteId;
 
-    private String nombre; // Nombre del cliente
-    private String rut; // Identificación única del cliente
-    private String direccion; // Dirección del cliente
-    private String telefono; // Teléfono del cliente
-    private String email; // Email del cliente
+    private String nombre;
+    private String rut;
+    private String direccion;
+    private String telefono;
+    private String email;
 
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference // Evita problemas de serialización recursiva en relaciones bidireccionales
-    private List<Deuda> deudas; // Lista de deudas asociadas al cliente
+    @JsonManagedReference
+    private List<Deuda> deudas = new ArrayList<>(); // Inicialización aquí
 
-    // Getters y Setters para acceder y modificar los campos
-
+    // Getters y setters
     public Long getClienteId() {
         return clienteId;
     }
@@ -77,5 +78,8 @@ public class Cliente {
 
     public void setDeudas(List<Deuda> deudas) {
         this.deudas = deudas;
+    }
+
+    public class ClienteDTO {
     }
 }

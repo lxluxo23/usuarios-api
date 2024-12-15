@@ -1,58 +1,58 @@
 package com.ejemplo.usuarios_api.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import java.math.BigDecimal; // Para manejar valores monetarios con precisión
-import java.time.LocalDate; // Para manejar fechas
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
-@Entity // Marca la clase como una entidad JPA
-@Table(name = "deuda") // Asocia la clase con la tabla "deuda" en la base de datos
+@Entity
+@Table(name = "deuda")
 public class Deuda {
 
-    @Id // Indica que este campo es la clave primaria
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Autogeneración del valor para la clave primaria
-    @Column(name = "deuda_id") // Especifica el nombre de la columna en la base de datos
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "deuda_id")
     private Long deudaId;
 
-    @ManyToOne // Define una relación de muchos a uno con Cliente
-    @JoinColumn(name = "cliente_id", nullable = false) // Asocia este campo con la columna "cliente_id"
-    @JsonBackReference // Evita problemas de serialización recursiva
-    private Cliente cliente; // Cliente asociado a la deuda
+    @ManyToOne
+    @JoinColumn(name = "cliente_id", nullable = false)
+    @JsonBackReference // Evita serialización recursiva hacia Cliente
+    private Cliente cliente;
 
-    @Enumerated(EnumType.STRING) // Enum almacenado como cadena de texto
-    @Column(name = "tipo_deuda", nullable = false) // Especifica la columna "tipo_deuda"
-    private TipoDeuda tipoDeuda; // Tipo de deuda (e.g., Hipoteca, Préstamo)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_deuda", nullable = false)
+    private TipoDeuda tipoDeuda;
 
-    @Enumerated(EnumType.STRING) // Enum almacenado como cadena de texto
-    @Column(name = "estado", nullable = false) // Especifica la columna "estado"
-    private EstadoDeuda estadoDeuda = EstadoDeuda.Pendiente; // Estado de la deuda (e.g., Pendiente, Pagada)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado", nullable = false)
+    private EstadoDeuda estadoDeuda = EstadoDeuda.Pendiente;
 
-    @Column(name = "monto_total", nullable = false) // Especifica la columna "monto_total"
-    private BigDecimal montoTotal; // Monto total de la deuda
+    @Column(name = "monto_total", nullable = false)
+    private BigDecimal montoTotal;
 
-    @Column(name = "monto_restante") // Especifica la columna "monto_restante"
-    private BigDecimal montoRestante; // Monto restante de la deuda
+    @Column(name = "monto_restante")
+    private BigDecimal montoRestante;
 
-    @Column(name = "fecha_creacion", nullable = false) // Especifica la columna "fecha_creacion"
-    private LocalDate fechaCreacion; // Fecha en la que se creó la deuda
+    @Column(name = "fecha_creacion", nullable = false)
+    private LocalDate fechaCreacion;
 
-    @Column(name = "fecha_inicio", nullable = false) // Especifica la columna "fecha_inicio"
-    private LocalDate fechaInicio; // Fecha de inicio de la deuda
+    @Column(name = "fecha_inicio", nullable = false)
+    private LocalDate fechaInicio;
 
-    @Column(name = "fecha_vencimiento", nullable = false) // Especifica la columna "fecha_vencimiento"
-    private LocalDate fechaVencimiento; // Fecha límite para el pago de la deuda
+    @Column(name = "fecha_vencimiento", nullable = false)
+    private LocalDate fechaVencimiento;
 
-    @Column(name = "observaciones") // Especifica la columna "observaciones"
-    private String observaciones; // Notas adicionales sobre la deuda
+    @Column(name = "observaciones")
+    private String observaciones;
 
     @OneToMany(mappedBy = "deuda", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference // Evita problemas de serialización recursiva en relaciones bidireccionales
-    private List<Pago> pagos; // Lista de pagos asociados a esta deuda
+    @JsonManagedReference // Evita serialización recursiva hacia Pagos
+    private List<Pago> pagos;
 
-    // Getters y Setters para acceder y modificar los campos
-
+    // Getters y setters
     public Long getDeudaId() {
         return deudaId;
     }
@@ -140,6 +140,4 @@ public class Deuda {
     public void setPagos(List<Pago> pagos) {
         this.pagos = pagos;
     }
-
-
 }
