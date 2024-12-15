@@ -22,4 +22,7 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
     // Consulta para encontrar pagos por deuda y mes
     @Query("SELECT p FROM Pago p WHERE p.deuda = :deuda AND p.mes = :mes")
     List<Pago> findByDeudaAndMes(@Param("deuda") Deuda deuda, @Param("mes") int mes);
+
+    @Query("SELECT p FROM Pago p WHERE p.deuda.cliente.clienteId = :clienteId")
+    List<Pago> findByDeudaClienteClienteId(@Param("clienteId") Long clienteId);
 }

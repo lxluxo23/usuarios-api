@@ -16,4 +16,5 @@ public interface DeudaRepository extends JpaRepository<Deuda, Long> {
     @Query("SELECT d FROM Deuda d WHERE d.cliente.clienteId = :clienteId AND d.tipoDeuda = :tipoDeuda AND YEAR(d.fechaInicio) = :anio")
     List<Deuda> findHonorariosByClienteAndAnio(Long clienteId, TipoDeuda tipoDeuda, int anio);
     List<Deuda> findAllByClienteClienteId(Long clienteId);
+    List<Deuda> findByClienteClienteId(Long clienteId);
 }
