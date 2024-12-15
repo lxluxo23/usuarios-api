@@ -10,9 +10,9 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**") // Permitir todas las rutas
-                .allowedOrigins("http://localhost:3000") // Cambia al puerto donde corre tu frontend
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Permitir métodos HTTP específicos
+                .allowedOrigins("https://cobros.myccontadores.cl") // Cambiar al dominio del frontend
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Métodos HTTP permitidos
                 .allowedHeaders("*") // Permitir todos los encabezados
-                .allowCredentials(false); // Permitir credenciales si es necesario
+                .allowCredentials(false); // Permitir credenciales (cookies o autenticación)
     }
 }
