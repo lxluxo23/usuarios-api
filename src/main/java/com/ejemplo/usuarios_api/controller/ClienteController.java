@@ -43,6 +43,27 @@ public class ClienteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(clienteDTO);
     }
 
+    // Actualizar un cliente existente
+    @PutMapping("/{clienteId}")
+    public ResponseEntity<ClienteDTO> actualizarCliente(@PathVariable Long clienteId, @RequestBody Cliente clienteActualizado) {
+        Cliente cliente = clienteService.actualizarCliente(clienteId, clienteActualizado);
+        ClienteDTO clienteDTO = clienteService.convertirClienteAClienteDTO(cliente);
+        return ResponseEntity.ok(clienteDTO);
+    }
+
+    // Eliminar un cliente
+    @DeleteMapping("/{clienteId}")
+    public ResponseEntity<Void> eliminarCliente(@PathVariable Long clienteId) {
+        clienteService.eliminarCliente(clienteId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Manejo de errores global
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> manejarArgumentoInvalido(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
     // Obtener deudas por cliente
     @GetMapping("/{clienteId}/deudas")
     public ResponseEntity<List<DeudaDTO>> obtenerDeudasPorCliente(@PathVariable Long clienteId) {

@@ -4,6 +4,7 @@ import com.ejemplo.usuarios_api.dto.HonorarioContableDTO;
 import com.ejemplo.usuarios_api.dto.MesHonorarioDTO;
 import com.ejemplo.usuarios_api.model.*;
 import com.ejemplo.usuarios_api.repository.*;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -64,6 +65,7 @@ public class HonorarioService {
     }
 
     // Crear un honorario contable
+    @Transactional
     public HonorarioContable crearHonorarioContable(Long clienteId, BigDecimal montoMensual) {
         Cliente cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new RuntimeException("Cliente no encontrado con ID: " + clienteId));
@@ -86,7 +88,6 @@ public class HonorarioService {
 
         HonorarioContable guardado = honorarioRepository.save(honorario);
 
-        // Crear los meses asociados al honorario
         for (int mes = 1; mes <= 12; mes++) {
             MesHonorario mesHonorario = new MesHonorario();
             mesHonorario.setHonorario(guardado);
@@ -179,4 +180,14 @@ public class HonorarioService {
                 mesesDTO
         );
     }
+    public void eliminarPagosPorHonorario(Long honorarioId) {
+        List<PagoHonorario> pagosHonorarios = pagoHonorarioRepository.findByMesHonorarioHonorarioHonorarioId(honorarioId);
+        pagoHonorarioRepository.deleteAll(pagosHonorarios);
+    }
+    @Transactional
+    public void eliminarHonorariosPorCliente(Long clienteId) {
+        List<HonorarioContable> honorarios = honorarioRepository.findByCliente_ClienteId(clienteId);
+        honorarioRepository.deleteAll(honorarios);
+    }
+
 }

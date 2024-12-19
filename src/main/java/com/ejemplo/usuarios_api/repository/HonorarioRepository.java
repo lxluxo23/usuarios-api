@@ -12,4 +12,5 @@ import java.util.List;
 public interface HonorarioRepository extends JpaRepository<HonorarioContable, Long> {
     List<HonorarioContable> findByCliente_ClienteIdAndAnio(Long clienteId, int anio);
     List<HonorarioContable> findByCliente_ClienteId(Long clienteId);
+
 }

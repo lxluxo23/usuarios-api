@@ -94,4 +94,9 @@ public class DeudaService {
                 .map(this::convertirDeudaADeudaDTO)
                 .collect(Collectors.toList());
     }
+
+    public void eliminarDeudasPorCliente(Long clienteId) {
+        List<Deuda> deudas = deudaRepository.findAllByClienteClienteId(clienteId);
+        deudaRepository.deleteAll(deudas);
+    }
 }

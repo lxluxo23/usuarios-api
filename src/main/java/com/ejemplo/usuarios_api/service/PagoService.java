@@ -102,4 +102,10 @@ public class PagoService {
                 .map(this::convertirPagoAPagoDTO)
                 .collect(Collectors.toList());
     }
+
+    public void eliminarPagosPorDeuda(Long deudaId) {
+        List<Pago> pagos = pagoRepository.findByDeudaDeudaId(deudaId);
+        pagoRepository.deleteAll(pagos);
+    }
+
 }

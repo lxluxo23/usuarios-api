@@ -16,6 +16,15 @@ public class ClienteService {
     @Autowired
     private ClienteRepository clienteRepository;
 
+    @Autowired
+    private DeudaService deudaService;
+
+    @Autowired
+    private HonorarioService honorarioService;
+
+    @Autowired
+    private PagoService pagoService;
+
     // Crear un nuevo cliente con validaciones
     public Cliente crearCliente(Cliente cliente) {
         if (cliente.getNombre() == null || cliente.getNombre().isEmpty()) {
@@ -70,5 +79,44 @@ public class ClienteService {
         Cliente cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado con ID: " + clienteId));
         return convertirClienteAClienteDTO(cliente);
+    }
+
+    // Actualizar un cliente
+    public Cliente actualizarCliente(Long clienteId, Cliente clienteActualizado) {
+        Cliente cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado con ID: " + clienteId));
+
+        cliente.setNombre(clienteActualizado.getNombre());
+        cliente.setRut(clienteActualizado.getRut());
+        cliente.setEmail(clienteActualizado.getEmail());
+        cliente.setTelefono(clienteActualizado.getTelefono());
+        cliente.setDireccion(clienteActualizado.getDireccion());
+        return clienteRepository.save(cliente);
+    }
+
+    // Eliminar un cliente
+    public void eliminarCliente(Long clienteId) {
+        // Buscar el cliente
+        Cliente cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado con ID: " + clienteId));
+
+        // Eliminar pagos relacionados con las deudas del cliente
+        deudaService.obtenerDeudasPorCliente(clienteId).forEach(deuda -> {
+            pagoService.eliminarPagosPorDeuda(deuda.getDeudaId());
+        });
+
+        // Eliminar deudas del cliente
+        deudaService.eliminarDeudasPorCliente(clienteId);
+
+        // Eliminar pagos honorarios relacionados con los honorarios contables del cliente
+        honorarioService.obtenerHonorariosPorCliente(clienteId).forEach(honorario -> {
+            honorarioService.eliminarPagosPorHonorario(honorario.getHonorarioId());
+        });
+
+        // Eliminar honorarios contables
+        honorarioService.eliminarHonorariosPorCliente(clienteId);
+
+        // Eliminar el cliente
+        clienteRepository.delete(cliente);
     }
 }

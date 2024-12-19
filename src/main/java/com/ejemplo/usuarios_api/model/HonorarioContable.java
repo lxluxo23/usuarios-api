@@ -3,6 +3,8 @@ package com.ejemplo.usuarios_api.model;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "honorario_contable")
@@ -16,6 +18,9 @@ public class HonorarioContable {
     @ManyToOne
     @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
+
+    @OneToMany(mappedBy = "honorario", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MesHonorario> mesesHonorarios = new ArrayList<>();
 
     @Column(name = "monto_mensual", nullable = false)
     private BigDecimal montoMensual;
@@ -51,6 +56,14 @@ public class HonorarioContable {
 
     public void setCliente(Cliente cliente) {
         this.cliente = cliente;
+    }
+
+    public List<MesHonorario> getMesesHonorarios() {
+        return mesesHonorarios;
+    }
+
+    public void setMesesHonorarios(List<MesHonorario> mesesHonorarios) {
+        this.mesesHonorarios = mesesHonorarios;
     }
 
     public BigDecimal getMontoMensual() {

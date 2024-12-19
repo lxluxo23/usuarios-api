@@ -15,5 +15,5 @@ public interface PagoHonorarioRepository extends JpaRepository<PagoHonorario, Lo
 
     @Query("SELECT ph FROM PagoHonorario ph WHERE ph.mesHonorario.honorario.cliente.clienteId = :clienteId")
     List<PagoHonorario> findByMesHonorarioHonorarioClienteClienteId(@Param("clienteId") Long clienteId);
-
+    List<PagoHonorario> findByMesHonorarioHonorarioHonorarioId(Long honorarioId);
 }
