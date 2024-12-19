@@ -1,10 +1,10 @@
-// PagoDTO.java
+// PagoResponseDTO.java
 package com.ejemplo.usuarios_api.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public class PagoDTO {
+public class PagoResponseDTO {
     private Long pagoId;
     private Long deudaId;
     private LocalDate fechaTransaccion;
@@ -12,12 +12,12 @@ public class PagoDTO {
     private String metodoPago;
     private String observaciones;
     private Integer mes;
-    private DeudaSimpleDTO deuda; // Información simplificada de la deuda
+    private DeudaSimpleDTO deuda;
 
     // Constructor completo
-    public PagoDTO(Long pagoId, Long deudaId, LocalDate fechaTransaccion,
-                   BigDecimal monto, String metodoPago, String observaciones, Integer mes,
-                   DeudaSimpleDTO deuda) {
+    public PagoResponseDTO(Long pagoId, Long deudaId, LocalDate fechaTransaccion,
+                           BigDecimal monto, String metodoPago, String observaciones, Integer mes,
+                           DeudaSimpleDTO deuda) {
         this.pagoId = pagoId;
         this.deudaId = deudaId;
         this.fechaTransaccion = fechaTransaccion;
