@@ -104,7 +104,4 @@ public class Pago {
     public void setMes(int mes) {
         this.mes = mes;
     }
-
-    public void setFechaPago(LocalDate fechaPago) {
-    }
 }

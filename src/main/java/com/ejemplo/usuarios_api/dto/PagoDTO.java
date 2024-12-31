@@ -1,31 +1,30 @@
-// PagoDTO.java
 package com.ejemplo.usuarios_api.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class PagoDTO {
+
     private Long pagoId;
-    private Long deudaId;
+    private Long deudaId; // Asociamos el ID de la deuda
     private LocalDate fechaTransaccion;
     private BigDecimal monto;
-    private String metodoPago;
+    private String metodoPago; // Representamos el Enum como String
     private String observaciones;
-    private Integer mes;
-    private DeudaSimpleDTO deuda; // Información simplificada de la deuda
+    private String comprobanteBase64; // Comprobante como Base64 (opcional)
+    private int mes;
 
     // Constructor completo
-    public PagoDTO(Long pagoId, Long deudaId, LocalDate fechaTransaccion,
-                   BigDecimal monto, String metodoPago, String observaciones, Integer mes,
-                   DeudaSimpleDTO deuda) {
+    public PagoDTO(Long pagoId, Long deudaId, LocalDate fechaTransaccion, BigDecimal monto, String metodoPago,
+                   String observaciones, String comprobanteBase64, int mes) {
         this.pagoId = pagoId;
         this.deudaId = deudaId;
         this.fechaTransaccion = fechaTransaccion;
         this.monto = monto;
         this.metodoPago = metodoPago;
         this.observaciones = observaciones;
+        this.comprobanteBase64 = comprobanteBase64;
         this.mes = mes;
-        this.deuda = deuda;
     }
 
     // Getters y Setters
@@ -77,19 +76,19 @@ public class PagoDTO {
         this.observaciones = observaciones;
     }
 
-    public Integer getMes() {
+    public String getComprobanteBase64() {
+        return comprobanteBase64;
+    }
+
+    public void setComprobanteBase64(String comprobanteBase64) {
+        this.comprobanteBase64 = comprobanteBase64;
+    }
+
+    public int getMes() {
         return mes;
     }
 
-    public void setMes(Integer mes) {
+    public void setMes(int mes) {
         this.mes = mes;
-    }
-
-    public DeudaSimpleDTO getDeuda() {
-        return deuda;
-    }
-
-    public void setDeuda(DeudaSimpleDTO deuda) {
-        this.deuda = deuda;
     }
 }
