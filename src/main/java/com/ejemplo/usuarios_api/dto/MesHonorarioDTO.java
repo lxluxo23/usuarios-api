@@ -1,5 +1,7 @@
 package com.ejemplo.usuarios_api.dto;
 
+import lombok.Setter;
+
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -8,8 +10,18 @@ public class MesHonorarioDTO {
     private BigDecimal montoMensual; // Monto total asignado al mes
     private BigDecimal montoPagado; // Monto ya pagado
     private String estado; // Estado del mes (Pendiente, Pagado)
+    @Setter
     private List<PagoHonorarioDTO> pagos; // Lista de pagos asociados
 
+    /**
+     * Constructor completo para inicializar un MesHonorarioDTO.
+     *
+     * @param mes          Número del mes (1 a 12)
+     * @param montoMensual Monto total asignado al mes
+     * @param montoPagado  Monto ya pagado
+     * @param estado       Estado del mes (Pendiente, Pagado)
+     * @param pagos        Lista de pagos asociados
+     */
     public MesHonorarioDTO(int mes, BigDecimal montoMensual, BigDecimal montoPagado, String estado, List<PagoHonorarioDTO> pagos) {
         if (mes < 1 || mes > 12) {
             throw new IllegalArgumentException("El número del mes debe estar entre 1 y 12.");
@@ -59,10 +71,6 @@ public class MesHonorarioDTO {
 
     public List<PagoHonorarioDTO> getPagos() {
         return pagos;
-    }
-
-    public void setPagos(List<PagoHonorarioDTO> pagos) {
-        this.pagos = pagos;
     }
 
     public boolean isCompletamentePagado() {

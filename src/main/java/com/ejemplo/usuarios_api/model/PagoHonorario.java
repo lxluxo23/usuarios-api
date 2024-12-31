@@ -1,10 +1,17 @@
 package com.ejemplo.usuarios_api.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class PagoHonorario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,7 +29,7 @@ public class PagoHonorario {
     private LocalDate fechaPago;
 
     @Lob
-    @Column(name = "comprobante", nullable = false)
+    @Column(name = "comprobante", nullable = false, columnDefinition = "LONGBLOB")
     private byte[] comprobante; // Cambiado a byte[] para almacenar archivos como BLOB
 
     @Column(name = "fecha_pago_real", nullable = false)
@@ -33,70 +40,5 @@ public class PagoHonorario {
     private MetodoPago metodoPago;
 
     @Column(name = "formato_comprobante", nullable = true)
-    private String formatoComprobante; // Almacena el formato del archivo, ej. "image/png"
-
-    // Getters y Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public MesHonorario getMesHonorario() {
-        return mesHonorario;
-    }
-
-    public void setMesHonorario(MesHonorario mesHonorario) {
-        this.mesHonorario = mesHonorario;
-    }
-
-    public BigDecimal getMonto() {
-        return monto;
-    }
-
-    public void setMonto(BigDecimal monto) {
-        this.monto = monto;
-    }
-
-    public LocalDate getFechaPago() {
-        return fechaPago;
-    }
-
-    public void setFechaPago(LocalDate fechaPago) {
-        this.fechaPago = fechaPago;
-    }
-
-    public byte[] getComprobante() {
-        return comprobante;
-    }
-
-    public void setComprobante(byte[] comprobante) {
-        this.comprobante = comprobante;
-    }
-
-    public LocalDate getFechaPagoReal() {
-        return fechaPagoReal;
-    }
-
-    public void setFechaPagoReal(LocalDate fechaPagoReal) {
-        this.fechaPagoReal = fechaPagoReal;
-    }
-
-    public MetodoPago getMetodoPago() {
-        return metodoPago;
-    }
-
-    public void setMetodoPago(MetodoPago metodoPago) {
-        this.metodoPago = metodoPago;
-    }
-
-    public String getFormatoComprobante() {
-        return formatoComprobante;
-    }
-
-    public void setFormatoComprobante(String formatoComprobante) {
-        this.formatoComprobante = formatoComprobante;
-    }
+    private String formatoComprobante; // Almacena el formato del archivo, ej. "image/png
 }

@@ -14,14 +14,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/honorarios")
-@CrossOrigin(origins = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
+@CrossOrigin(origins = "", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 public class HonorarioController {
 
     @Autowired
@@ -41,31 +40,25 @@ public class HonorarioController {
         }
     }
 
-    // Registrar un pago para un mes específico con comprobante
+    // Registrar un pago para un mes específico
     @PostMapping("/{honorarioId}/pagos")
     public ResponseEntity<?> registrarPago(
             @PathVariable Long honorarioId,
             @RequestParam("mes") int mes,
-            @RequestParam("montoPago") BigDecimal montoPago,
+            @RequestParam("montoPago") double montoPago,
             @RequestParam("comprobante") MultipartFile comprobante,
             @RequestParam("fechaPagoReal") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaPagoReal,
-            @RequestParam("metodoPago") MetodoPago metodoPago) {
+            @RequestParam("metodoPago") MetodoPago metodoPago
+            ) {
         try {
-            if (comprobante.isEmpty()) {
-                return ResponseEntity.badRequest().body("El comprobante no puede estar vacío.");
-            }
+            honorarioService.registrarPago(honorarioId, mes, montoPago, comprobante.getBytes(), fechaPagoReal, metodoPago);
 
-            honorarioService.registrarPago(honorarioId, mes, montoPago, comprobante, fechaPagoReal, metodoPago);
             return ResponseEntity.ok(Map.of("message", "Pago registrado con éxito."));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error al registrar el pago: " + e.getMessage()));
         }
     }
-
 
     // Obtener detalles de un honorario contable
     @GetMapping("/{honorarioId}")
@@ -86,7 +79,31 @@ public class HonorarioController {
         return ResponseEntity.ok(honorariosDTO);
     }
 
-    // Recuperar un comprobante
+    @GetMapping("/{honorarioId}/detalle")
+    public ResponseEntity<?> obtenerDetalleHonorario(@PathVariable Long honorarioId) {
+        try {
+            HonorarioContableDTO honorario = honorarioService.obtenerDetallesHonorario(honorarioId);
+            return ResponseEntity.ok(honorario);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "No se pudo obtener el detalle del honorario: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{honorarioId}/mes/{mes}")
+    public ResponseEntity<?> obtenerDetalleMesHonorario(
+            @PathVariable Long honorarioId,
+            @PathVariable int mes) {
+        try {
+            MesHonorarioDTO mesHonorario = honorarioService.obtenerDetalleMes(honorarioId, mes);
+            return ResponseEntity.ok(mesHonorario);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "No se pudo obtener el detalle del mes: " + e.getMessage()));
+        }
+    }
+
+
     @GetMapping("/pagos/comprobante/{pagoId}")
     public ResponseEntity<byte[]> obtenerComprobante(@PathVariable Long pagoId) {
         try {
@@ -113,31 +130,4 @@ public class HonorarioController {
                     .body(null);
         }
     }
-
-
-
-    @GetMapping("/{honorarioId}/detalle")
-    public ResponseEntity<?> obtenerDetalleHonorario(@PathVariable Long honorarioId) {
-        try {
-            HonorarioContableDTO honorario = honorarioService.obtenerDetallesHonorario(honorarioId);
-            return ResponseEntity.ok(honorario);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "No se pudo obtener el detalle del honorario: " + e.getMessage()));
-        }
-    }
-
-    @GetMapping("/{honorarioId}/mes/{mes}")
-    public ResponseEntity<?> obtenerDetalleMesHonorario(
-            @PathVariable Long honorarioId,
-            @PathVariable int mes) {
-        try {
-            MesHonorarioDTO mesHonorario = honorarioService.obtenerDetalleMes(honorarioId, mes);
-            return ResponseEntity.ok(mesHonorario);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "No se pudo obtener el detalle del mes: " + e.getMessage()));
-        }
-    }
-
 }
