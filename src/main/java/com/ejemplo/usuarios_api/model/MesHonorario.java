@@ -1,11 +1,18 @@
 package com.ejemplo.usuarios_api.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
-import com.ejemplo.usuarios_api.model.HonorarioContable;
-import com.ejemplo.usuarios_api.model.EstadoDeuda;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "mes_honorario")
 public class MesHonorario {
 
@@ -21,61 +28,15 @@ public class MesHonorario {
     private int mes;
 
     @Column(name = "monto_mensual", nullable = false)
-    private BigDecimal montoMensual;
+    private BigDecimal montoMensual = BigDecimal.ZERO;
 
     @Column(name = "monto_pagado", nullable = false)
-    private BigDecimal montoPagado;
+    private BigDecimal montoPagado = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false)
     private EstadoDeuda estado;
 
-    // Getters y Setters
-    public Long getMesId() {
-        return mesId;
-    }
-
-    public void setMesId(Long mesId) {
-        this.mesId = mesId;
-    }
-
-    public HonorarioContable getHonorario() {
-        return honorario;
-    }
-
-    public void setHonorario(HonorarioContable honorario) { // Agregar este método
-        this.honorario = honorario;
-    }
-
-    public int getMes() {
-        return mes;
-    }
-
-    public void setMes(int mes) {
-        this.mes = mes;
-    }
-
-    public BigDecimal getMontoMensual() {
-        return montoMensual;
-    }
-
-    public void setMontoMensual(BigDecimal montoMensual) {
-        this.montoMensual = montoMensual;
-    }
-
-    public BigDecimal getMontoPagado() {
-        return montoPagado;
-    }
-
-    public void setMontoPagado(BigDecimal montoPagado) {
-        this.montoPagado = montoPagado;
-    }
-
-    public EstadoDeuda getEstado() {
-        return estado;
-    }
-
-    public void setEstado(EstadoDeuda estado) {
-        this.estado = estado;
-    }
+    @OneToMany(mappedBy = "mesHonorario", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PagoHonorario> pagos = new ArrayList<>(); // Relación con PagoHonorario
 }

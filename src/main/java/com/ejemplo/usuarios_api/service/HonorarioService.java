@@ -2,18 +2,25 @@ package com.ejemplo.usuarios_api.service;
 
 import com.ejemplo.usuarios_api.dto.HonorarioContableDTO;
 import com.ejemplo.usuarios_api.dto.MesHonorarioDTO;
+import com.ejemplo.usuarios_api.dto.PagoHonorarioDTO;
 import com.ejemplo.usuarios_api.model.*;
 import com.ejemplo.usuarios_api.repository.*;
 import jakarta.transaction.Transactional;
+import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class HonorarioService {
 
     @Autowired
@@ -39,7 +46,18 @@ public class HonorarioService {
                         mes.getMes(),
                         mes.getMontoMensual(),
                         mes.getMontoPagado(),
-                        mes.getEstado().name()
+                        mes.getEstado().name(),
+                        mes.getPagos().stream()
+                                .map(pago -> new PagoHonorarioDTO(
+                                        pago.getId(),
+                                        pago.getFechaPago(),
+                                        pago.getFechaPagoReal(),
+                                        pago.getMonto(),
+                                        pago.getMetodoPago(),
+                                        pago.getComprobante() != null ? "Disponible" : "No disponible"
+                                ))
+                                .toList()
+
                 ))
                 .collect(Collectors.toList());
 
@@ -102,11 +120,11 @@ public class HonorarioService {
     }
 
     // Registrar un pago para un mes específico
-    public void registrarPago(Long honorarioId, int mes, double montoPago, String comprobante) {
+    public void registrarPago(Long honorarioId, int mes, double montoPago, byte[] comprobante, LocalDate fechaPagoReal, MetodoPago metodoPago) {
         // Logs para depuración
-        System.out.println("Intentando registrar un pago...");
+        log.info("intentando registrar un pago...");
         System.out.println("Honorario ID: " + honorarioId + ", Mes: " + mes);
-        System.out.println("Monto del pago: " + montoPago + ", Comprobante: " + comprobante);
+        System.out.println("Monto del pago: " + montoPago);
 
         // Buscar el mes específico para el honorario
         MesHonorario mesHonorario = mesHonorarioRepository.findByHonorario_HonorarioIdAndMes(honorarioId, mes)
@@ -124,7 +142,9 @@ public class HonorarioService {
         nuevoPago.setMesHonorario(mesHonorario);
         nuevoPago.setMonto(BigDecimal.valueOf(montoPago));
         nuevoPago.setFechaPago(LocalDate.now());
+        nuevoPago.setFechaPagoReal(fechaPagoReal);
         nuevoPago.setComprobante(comprobante);
+        nuevoPago.setMetodoPago(metodoPago);
         pagoHonorarioRepository.save(nuevoPago);
 
         System.out.println("Pago registrado en la base de datos.");
@@ -164,7 +184,17 @@ public class HonorarioService {
                         mes.getMes(),
                         mes.getMontoMensual(),
                         mes.getMontoPagado(),
-                        mes.getEstado().name()
+                        mes.getEstado().name(),
+                        mes.getPagos().stream()
+                                .map(pago -> new PagoHonorarioDTO(
+                                        pago.getId(),
+                                        pago.getFechaPago(),
+                                        pago.getFechaPagoReal(),
+                                        pago.getMonto(),
+                                        pago.getMetodoPago(),
+                                        pago.getComprobante() != null ? "Disponible" : "No disponible"
+                                ))
+                                .collect(Collectors.toList())
                 ))
                 .collect(Collectors.toList());
 
@@ -189,5 +219,39 @@ public class HonorarioService {
         List<HonorarioContable> honorarios = honorarioRepository.findByCliente_ClienteId(clienteId);
         honorarioRepository.deleteAll(honorarios);
     }
+    public MesHonorarioDTO obtenerDetalleMes(Long honorarioId, int mes) {
+        MesHonorario mesHonorario = mesHonorarioRepository.findByHonorario_HonorarioIdAndMes(honorarioId, mes)
+                .orElseThrow(() -> new RuntimeException("No se encontró el mes " + mes + " para el honorario con ID: " + honorarioId));
 
+        // Convertir el MesHonorario a MesHonorarioDTO
+        return new MesHonorarioDTO(
+                mesHonorario.getMes(),
+                mesHonorario.getMontoMensual(),
+                mesHonorario.getMontoPagado(),
+                mesHonorario.getEstado().name(),
+                mesHonorario.getPagos() != null ? mesHonorario.getPagos().stream()
+                        .map(pago -> new PagoHonorarioDTO(
+                                pago.getId(),
+                                pago.getFechaPago(),
+                                pago.getFechaPagoReal(),
+                                pago.getMonto(),
+                                pago.getMetodoPago(),
+                                pago.getComprobante() != null ? "Disponible" : "No disponible"
+                        ))
+                        .collect(Collectors.toList()) : Collections.emptyList()
+        );
+    }
+    public Map<String, Object> obtenerComprobante(Long pagoId) {
+        PagoHonorario pago = pagoHonorarioRepository.findById(pagoId)
+                .orElseThrow(() -> new RuntimeException("Pago no encontrado con ID: " + pagoId));
+
+        if (pago.getComprobante() == null) {
+            throw new RuntimeException("El comprobante no está disponible para este pago.");
+        }
+
+        Map<String, Object> resultado = new HashMap<>();
+        resultado.put("comprobante", pago.getComprobante());
+        resultado.put("formato", pago.getFormatoComprobante()); // Recupera el formato del comprobante
+        return resultado;
+    }
 }

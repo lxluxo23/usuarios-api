@@ -1,10 +1,17 @@
 package com.ejemplo.usuarios_api.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class PagoHonorario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,47 +28,17 @@ public class PagoHonorario {
     @Column(name = "fecha_pago", nullable = false)
     private LocalDate fechaPago;
 
-    @Column(name = "comprobante", nullable = false)
-    private String comprobante;
+    @Lob
+    @Column(name = "comprobante", nullable = false, columnDefinition = "LONGBLOB")
+    private byte[] comprobante; // Cambiado a byte[] para almacenar archivos como BLOB
 
-    // Getters y Setters
-    public Long getId() { // Cambiado de getPagoId() a getId()
-        return id;
-    }
+    @Column(name = "fecha_pago_real", nullable = false)
+    private LocalDate fechaPagoReal;
 
-    public void setId(Long id) { // Cambiado de setPagoId() a setId()
-        this.id = id;
-    }
+    @Enumerated(EnumType.STRING) // Almacena el valor del enum como texto
+    @Column(name = "metodo_pago", nullable = false)
+    private MetodoPago metodoPago;
 
-    public MesHonorario getMesHonorario() {
-        return mesHonorario;
-    }
-
-    public void setMesHonorario(MesHonorario mesHonorario) {
-        this.mesHonorario = mesHonorario;
-    }
-
-    public BigDecimal getMonto() {
-        return monto;
-    }
-
-    public void setMonto(BigDecimal monto) {
-        this.monto = monto;
-    }
-
-    public LocalDate getFechaPago() {
-        return fechaPago;
-    }
-
-    public void setFechaPago(LocalDate fechaPago) {
-        this.fechaPago = fechaPago;
-    }
-
-    public String getComprobante() {
-        return comprobante;
-    }
-
-    public void setComprobante(String comprobante) {
-        this.comprobante = comprobante;
-    }
+    @Column(name = "formato_comprobante", nullable = true)
+    private String formatoComprobante; // Almacena el formato del archivo, ej. "image/png
 }
