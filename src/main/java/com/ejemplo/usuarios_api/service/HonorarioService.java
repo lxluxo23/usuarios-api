@@ -123,10 +123,7 @@ public class HonorarioService {
         nuevoPago.setFechaPagoReal(fechaPagoReal); // Fecha ingresada por el usuario
         nuevoPago.setMetodoPago(metodoPago); // Método de pago seleccionado
         nuevoPago.setComprobante(comprobante.getBytes());
-        nuevoPago.setFormatoComprobante(comprobante.getContentType()); // Establece el formato del archivo
-
         System.out.println("Comprobante guardado como bytes con tamaño: " + comprobante.getBytes().length);
-        System.out.println("Formato del comprobante: " + comprobante.getContentType());
 
         // Guardar el pago
         pagoHonorarioRepository.save(nuevoPago);
@@ -153,7 +150,6 @@ public class HonorarioService {
         honorarioRepository.save(honorario);
         System.out.println("Pago registrado con éxito.");
     }
-
 
 
 

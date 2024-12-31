@@ -14,10 +14,6 @@ public class MesHonorario {
     private Long mesId;
 
     @ManyToOne
-    @JoinColumn(name = "deuda_id", nullable = false)
-    private Deuda deuda; // Relación con Deuda
-
-    @ManyToOne
     @JoinColumn(name = "honorario_id", nullable = false)
     private HonorarioContable honorario; // Relación con HonorarioContable
 

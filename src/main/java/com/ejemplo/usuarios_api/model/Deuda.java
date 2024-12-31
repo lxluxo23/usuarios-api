@@ -17,9 +17,6 @@ public class Deuda {
     @Column(name = "deuda_id")
     private Long deudaId;
 
-    @OneToMany(mappedBy = "deuda", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MesHonorario> meses; // Relación con MesHonorario
-
     @ManyToOne
     @JoinColumn(name = "cliente_id", nullable = false)
     @JsonBackReference // Evita serialización recursiva hacia Cliente
