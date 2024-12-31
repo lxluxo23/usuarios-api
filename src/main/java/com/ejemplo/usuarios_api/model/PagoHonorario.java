@@ -21,15 +21,26 @@ public class PagoHonorario {
     @Column(name = "fecha_pago", nullable = false)
     private LocalDate fechaPago;
 
+    @Lob
     @Column(name = "comprobante", nullable = false)
-    private String comprobante;
+    private byte[] comprobante; // Cambiado a byte[] para almacenar archivos como BLOB
+
+    @Column(name = "fecha_pago_real", nullable = false)
+    private LocalDate fechaPagoReal;
+
+    @Enumerated(EnumType.STRING) // Almacena el valor del enum como texto
+    @Column(name = "metodo_pago", nullable = false)
+    private MetodoPago metodoPago;
+
+    @Column(name = "formato_comprobante", nullable = true)
+    private String formatoComprobante; // Almacena el formato del archivo, ej. "image/png"
 
     // Getters y Setters
-    public Long getId() { // Cambiado de getPagoId() a getId()
+    public Long getId() {
         return id;
     }
 
-    public void setId(Long id) { // Cambiado de setPagoId() a setId()
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -57,11 +68,35 @@ public class PagoHonorario {
         this.fechaPago = fechaPago;
     }
 
-    public String getComprobante() {
+    public byte[] getComprobante() {
         return comprobante;
     }
 
-    public void setComprobante(String comprobante) {
+    public void setComprobante(byte[] comprobante) {
         this.comprobante = comprobante;
+    }
+
+    public LocalDate getFechaPagoReal() {
+        return fechaPagoReal;
+    }
+
+    public void setFechaPagoReal(LocalDate fechaPagoReal) {
+        this.fechaPagoReal = fechaPagoReal;
+    }
+
+    public MetodoPago getMetodoPago() {
+        return metodoPago;
+    }
+
+    public void setMetodoPago(MetodoPago metodoPago) {
+        this.metodoPago = metodoPago;
+    }
+
+    public String getFormatoComprobante() {
+        return formatoComprobante;
+    }
+
+    public void setFormatoComprobante(String formatoComprobante) {
+        this.formatoComprobante = formatoComprobante;
     }
 }
