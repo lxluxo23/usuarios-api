@@ -1,6 +1,7 @@
 package com.ejemplo.usuarios_api.service;
 
 import com.ejemplo.usuarios_api.dto.ClienteDTO;
+import com.ejemplo.usuarios_api.dto.ClienteSaldoPendienteDTO;
 import com.ejemplo.usuarios_api.dto.DeudaDTO;
 import com.ejemplo.usuarios_api.model.Cliente;
 import com.ejemplo.usuarios_api.repository.ClienteRepository;
@@ -118,5 +119,9 @@ public class ClienteService {
 
         // Eliminar el cliente
         clienteRepository.delete(cliente);
+    }
+
+    public List<ClienteSaldoPendienteDTO> obtenerClientesConSaldoPendiente() {
+        return clienteRepository.findAllClientesConSaldoPendiente();
     }
 }

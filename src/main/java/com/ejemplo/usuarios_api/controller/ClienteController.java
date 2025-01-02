@@ -1,23 +1,32 @@
 package com.ejemplo.usuarios_api.controller;
 
 import com.ejemplo.usuarios_api.dto.ClienteDTO;
+import com.ejemplo.usuarios_api.dto.ClienteSaldoPendienteDTO;
 import com.ejemplo.usuarios_api.dto.DeudaDTO;
 import com.ejemplo.usuarios_api.dto.PagoDTO;
 import com.ejemplo.usuarios_api.model.Cliente;
 import com.ejemplo.usuarios_api.service.ClienteService;
 import com.ejemplo.usuarios_api.service.DeudaService;
 import com.ejemplo.usuarios_api.service.PagoService;
+import com.ejemplo.usuarios_api.util.CsvUtil;
+import com.ejemplo.usuarios_api.util.ExcelUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
 @CrossOrigin(origins = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 @RequestMapping("/api/clientes")
 public class ClienteController {
+
+    @Autowired
+    private ExcelUtil excelUtil;
 
     @Autowired
     private ClienteService clienteService;
@@ -27,6 +36,9 @@ public class ClienteController {
 
     @Autowired
     private PagoService pagoService;
+
+    @Autowired
+    private CsvUtil csvUtil;
 
     // Obtener todos los clientes
     @GetMapping
@@ -83,5 +95,51 @@ public class ClienteController {
     public ResponseEntity<ClienteDTO> obtenerCliente(@PathVariable Long clienteId) {
         ClienteDTO clienteDTO = clienteService.obtenerClientePorId(clienteId);
         return ResponseEntity.ok(clienteDTO);
+    }
+
+    @GetMapping("/exportar/excel")
+    public ResponseEntity<ByteArrayResource> exportarClientesConSaldoPendienteExcel() {
+        try {
+            List<ClienteSaldoPendienteDTO> clientes = clienteService.obtenerClientesConSaldoPendiente();
+            byte[] excelBytes = excelUtil.generarExcelClientesConSaldo(clientes);
+
+            ByteArrayResource resource = new ByteArrayResource(excelBytes);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=clientes_saldo_pendiente.xlsx");
+            headers.add(HttpHeaders.CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .contentLength(excelBytes.length)
+                    .body(resource);
+        } catch (Exception e) {
+            // Manejar excepción según corresponda
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    // Endpoint para descargar la lista de clientes con saldo pendiente en CSV (Opcional)
+    @GetMapping("/exportar/csv")
+    public ResponseEntity<ByteArrayResource> exportarClientesConSaldoPendienteCSV() {
+        try {
+            List<ClienteSaldoPendienteDTO> clientes = clienteService.obtenerClientesConSaldoPendiente();
+            String csvContenido = csvUtil.generarCsvClientesConSaldo(clientes);
+            byte[] csvBytes = csvContenido.getBytes(StandardCharsets.UTF_8);
+
+            ByteArrayResource resource = new ByteArrayResource(csvBytes);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=clientes_saldo_pendiente.csv");
+            headers.add(HttpHeaders.CONTENT_TYPE, "text/csv");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .contentLength(csvBytes.length)
+                    .body(resource);
+        } catch (Exception e) {
+            // Manejar excepción según corresponda
+            return ResponseEntity.status(500).build();
+        }
     }
 }
