@@ -30,6 +30,8 @@ services:
     image: phpmyadmin:latest
     environment:
       PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: 041124
     depends_on:
       - mysql
     networks:
