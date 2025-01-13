@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
+import java.time.YearMonth;
 import java.util.List;
 
 @RestController
@@ -98,9 +99,21 @@ public class ClienteController {
     }
 
     @GetMapping("/exportar/excel")
-    public ResponseEntity<ByteArrayResource> exportarClientesConSaldoPendienteExcel() {
+    public ResponseEntity<ByteArrayResource> exportarClientesConSaldoPendienteExcel(
+            @RequestParam(value = "mes") Integer mes,
+            @RequestParam(value = "anio") Integer anio) {
         try {
-            List<ClienteSaldoPendienteDTO> clientes = clienteService.obtenerClientesConSaldoPendiente();
+            System.out.println("Iniciando exportación de Excel para mes: " + mes + ", año: " + anio);
+
+            // Llamar al servicio
+            List<ClienteSaldoPendienteDTO> clientes = clienteService.obtenerClientesConSaldoPendientePorFecha(mes, anio);
+
+            if (clientes.isEmpty()) {
+                System.out.println("No se encontraron clientes con saldo pendiente para el mes y año proporcionados.");
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+            }
+
+            // Generar el archivo Excel
             byte[] excelBytes = excelUtil.generarExcelClientesConSaldo(clientes);
 
             ByteArrayResource resource = new ByteArrayResource(excelBytes);
@@ -114,10 +127,12 @@ public class ClienteController {
                     .contentLength(excelBytes.length)
                     .body(resource);
         } catch (Exception e) {
-            // Manejar excepción según corresponda
-            return ResponseEntity.status(500).build();
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
+
 
     // Endpoint para descargar la lista de clientes con saldo pendiente en CSV (Opcional)
     @GetMapping("/exportar/csv")

@@ -20,23 +20,12 @@ public class ExcelUtil {
         Row headerRow = sheet.createRow(0);
         String[] encabezados = {"ID Cliente", "Nombre", "RUT", "Email", "Teléfono", "Saldo Pendiente"};
 
-        CellStyle headerStyle = workbook.createCellStyle();
-        Font font = workbook.createFont();
-        font.setBold(true);
-        headerStyle.setFont(font);
-
         for (int i = 0; i < encabezados.length; i++) {
             Cell cell = headerRow.createCell(i);
             cell.setCellValue(encabezados[i]);
-            cell.setCellStyle(headerStyle);
         }
 
-        // Crear estilo para 'Saldo Pendiente'
-        CellStyle saldoStyle = workbook.createCellStyle();
-        DataFormat format = workbook.createDataFormat();
-        saldoStyle.setDataFormat(format.getFormat("#,##0")); // Formato sin decimales y con punto como separador de miles
-
-        // Rellenar datos
+        // Rellenar datos de los clientes
         int fila = 1;
         for (ClienteSaldoPendienteDTO cliente : clientes) {
             Row row = sheet.createRow(fila++);
@@ -45,14 +34,7 @@ public class ExcelUtil {
             row.createCell(2).setCellValue(cliente.getRut());
             row.createCell(3).setCellValue(cliente.getEmail());
             row.createCell(4).setCellValue(cliente.getTelefono());
-
-            Cell saldoCell = row.createCell(5);
-            if (cliente.getSaldoPendiente() != null) {
-                saldoCell.setCellValue(cliente.getSaldoPendiente().doubleValue());
-            } else {
-                saldoCell.setCellValue(0);
-            }
-            saldoCell.setCellStyle(saldoStyle);
+            row.createCell(5).setCellValue(cliente.getSaldoPendiente().doubleValue());
         }
 
         // Autoajustar el tamaño de las columnas
@@ -60,11 +42,11 @@ public class ExcelUtil {
             sheet.autoSizeColumn(i);
         }
 
-        // Escribir el contenido en un ByteArrayOutputStream
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         workbook.write(baos);
         workbook.close();
 
         return baos.toByteArray();
     }
+
 }

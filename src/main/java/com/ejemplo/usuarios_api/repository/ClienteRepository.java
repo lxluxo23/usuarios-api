@@ -15,4 +15,10 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
     @Query("SELECT new com.ejemplo.usuarios_api.dto.ClienteSaldoPendienteDTO(c.clienteId, c.nombre, c.rut, c.email, c.telefono, COALESCE(SUM(d.montoRestante), 0)) " +
             "FROM Cliente c LEFT JOIN c.deudas d GROUP BY c.clienteId, c.nombre, c.rut, c.email, c.telefono")
     List<ClienteSaldoPendienteDTO> findAllClientesConSaldoPendiente();
+
+    @Query("SELECT new com.ejemplo.usuarios_api.dto.ClienteSaldoPendienteDTO(c.clienteId, c.nombre, c.rut, c.email, c.telefono, COALESCE(SUM(d.montoRestante), 0)) " +
+            "FROM Cliente c LEFT JOIN c.deudas d " +
+            "WHERE MONTH(d.fechaVencimiento) = :mes AND YEAR(d.fechaVencimiento) = :anio " +
+            "GROUP BY c.clienteId, c.nombre, c.rut, c.email, c.telefono")
+    List<ClienteSaldoPendienteDTO> findClientesConSaldoPendientePorFecha(int mes, int anio);
 }

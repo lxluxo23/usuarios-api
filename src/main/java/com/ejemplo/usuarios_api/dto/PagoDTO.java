@@ -19,5 +19,6 @@ public class PagoDTO {
     private String metodoPago;
     private String observaciones;
     private Integer mes;
-    private DeudaSimpleDTO deuda; // Información simplificada de la deuda
+    private DeudaSimpleDTO deuda;
+// Información simplificada de la deuda
 }
