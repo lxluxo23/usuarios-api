@@ -15,7 +15,10 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,7 +51,7 @@ public class PagoService {
     }
 
     // Registrar un nuevo pago
-    public PagoDTO registrarPago(Long deudaId, PagoDTO pagoDTO) {
+    public PagoDTO registrarPago(Long deudaId, PagoDTO pagoDTO, byte[] comprobante, String formatoComprobante) {
         Deuda deuda = deudaRepository.findById(deudaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Deuda no encontrada con ID: " + deudaId));
 
@@ -59,6 +62,10 @@ public class PagoService {
         pago.setFechaTransaccion(pagoDTO.getFechaTransaccion() != null ? pagoDTO.getFechaTransaccion() : LocalDate.now());
         pago.setObservaciones(pagoDTO.getObservaciones());
         pago.setMes(pagoDTO.getFechaTransaccion().getMonthValue());
+
+        // Guardar el comprobante
+        pago.setComprobante(comprobante); // Archivo binario
+        pago.setFormatoComprobante(formatoComprobante); // Tipo MIME (ej. "application/pdf")
 
         // Actualizar monto restante
         deuda.setMontoRestante(deuda.getMontoRestante().subtract(pagoDTO.getMonto()));
@@ -72,6 +79,7 @@ public class PagoService {
 
         return convertirPagoAPagoDTO(pagoGuardado);
     }
+
 
     // Cancelar un pago
     public void cancelarPago(Long pagoId) {
@@ -139,6 +147,27 @@ public class PagoService {
         if (!pagos.isEmpty()) {
             pagoRepository.deleteAll(pagos);
         }
+    }
+
+    public Map<String, Object> obtenerComprobante(Long pagoId) {
+        Optional<Pago> pagoOpt = pagoRepository.findById(pagoId);
+        if (!pagoOpt.isPresent()) {
+            System.out.println("Pago no encontrado con ID: " + pagoId);
+            return null;
+        }
+
+        Pago pago = pagoOpt.get();
+        if (pago.getComprobante() == null || pago.getFormatoComprobante() == null) {
+            System.out.println("Comprobante o formato es nulo para el pagoId: " + pagoId);
+            return null;
+        }
+
+        Map<String, Object> comprobanteData = new HashMap<>();
+        comprobanteData.put("comprobante", pago.getComprobante());
+        comprobanteData.put("formato", pago.getFormatoComprobante());
+
+        System.out.println("Comprobante encontrado para pagoId: " + pagoId);
+        return comprobanteData;
     }
 
 }

@@ -1,15 +1,19 @@
 package com.ejemplo.usuarios_api.controller;
 
 import com.ejemplo.usuarios_api.dto.PagoDTO;
+import com.ejemplo.usuarios_api.model.MetodoPago;
 import com.ejemplo.usuarios_api.service.DeudaService;
 import com.ejemplo.usuarios_api.service.PagoService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
-
+import java.util.Map;
 
 
 @RestController
@@ -37,12 +41,37 @@ public class PagoController {
         return ResponseEntity.ok(pagos);
     }
 
-    // Registrar un nuevo pago asociado a una deuda específica
-    @PostMapping("/registrar/{deudaId}")
-    public ResponseEntity<PagoDTO> crearPago(@PathVariable Long deudaId, @RequestBody PagoDTO pagoDTO) {
-        PagoDTO pagoRegistrado = pagoService.registrarPago(deudaId, pagoDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(pagoRegistrado);
+    @PostMapping("/{deudaId}/registrar")
+    public ResponseEntity<PagoDTO> registrarPago(
+            @PathVariable Long deudaId,
+            @RequestParam("montoPago") double montoPago,
+            @RequestParam("comprobante") MultipartFile comprobante,
+            @RequestParam("fechaPagoReal") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaPagoReal,
+            @RequestParam("metodoPago") String metodoPago,
+            @RequestParam(value = "observaciones", required = false) String observaciones
+    ) {
+        try {
+            PagoDTO pagoDTO = new PagoDTO();
+            pagoDTO.setMonto(BigDecimal.valueOf(montoPago));
+            pagoDTO.setMetodoPago(metodoPago);
+            pagoDTO.setFechaTransaccion(fechaPagoReal);
+            pagoDTO.setObservaciones(observaciones);
+
+            PagoDTO pagoRegistrado = pagoService.registrarPago(
+                    deudaId,
+                    pagoDTO,
+                    comprobante.getBytes(),
+                    comprobante.getContentType()
+            );
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(pagoRegistrado);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
+        }
     }
+
+
 
     // Obtener pagos realizados por un cliente
     @GetMapping("/cliente/{clienteId}")
@@ -76,4 +105,52 @@ public class PagoController {
         List<PagoDTO> pagos = pagoService.obtenerPagosPorRangoDeFechas(deudaId, fechaInicio, fechaFin);
         return ResponseEntity.ok(pagos);
     }
+    @GetMapping("/comprobante/{pagoId}")
+    public ResponseEntity<byte[]> obtenerComprobantePago(@PathVariable Long pagoId) {
+        try {
+            System.out.println("Buscando comprobante para pagoId: " + pagoId);
+
+            Map<String, Object> comprobanteData = pagoService.obtenerComprobante(pagoId);
+            if (comprobanteData == null) {
+                System.out.println("No se encontró comprobante para el pagoId: " + pagoId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+
+            // Verificar las claves presentes
+            System.out.println("Datos del comprobante: " + comprobanteData.keySet());
+
+            byte[] comprobante = (byte[]) comprobanteData.get("comprobante");
+            String formato = (String) comprobanteData.get("formato");
+
+            if (comprobante == null || formato == null) {
+                System.out.println("Comprobante o formato es nulo para el pagoId: " + pagoId);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            }
+
+            MediaType mediaType;
+            if ("image/png".equalsIgnoreCase(formato)) {
+                mediaType = MediaType.IMAGE_PNG;
+            } else if ("image/jpeg".equalsIgnoreCase(formato)) { // Añadido
+                mediaType = MediaType.IMAGE_JPEG;
+            } else if ("application/pdf".equalsIgnoreCase(formato)) {
+                mediaType = MediaType.APPLICATION_PDF;
+            } else {
+                mediaType = MediaType.APPLICATION_OCTET_STREAM;
+            }
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(mediaType);
+            headers.setContentDisposition(ContentDisposition.builder("inline")
+                    .filename("comprobante_" + pagoId + "." + formato.split("/")[1])
+                    .build());
+
+            return new ResponseEntity<>(comprobante, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println("Error al obtener el comprobante: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+
+
 }

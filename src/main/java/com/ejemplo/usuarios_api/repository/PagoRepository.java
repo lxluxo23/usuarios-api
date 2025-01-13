@@ -25,4 +25,5 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
 
     @Query("SELECT p FROM Pago p WHERE p.deuda.cliente.clienteId = :clienteId")
     List<Pago> findByDeudaClienteClienteId(@Param("clienteId") Long clienteId);
+
 }

@@ -37,7 +37,7 @@ public class Pago {
     private MetodoPago metodoPago;
 
     @Lob
-    @Column(name = "comprobante")
+    @Column(name = "comprobante", columnDefinition = "LONGBLOB")
     private byte[] comprobante;
 
     @Column(name = "observaciones")
@@ -45,4 +45,7 @@ public class Pago {
 
     @Column(name = "mes", nullable = false)
     private int mes;
+
+    @Column(name = "formato_comprobante")
+    private String formatoComprobante;
 }
