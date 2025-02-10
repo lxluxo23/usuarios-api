@@ -254,4 +254,23 @@ public class HonorarioService {
         resultado.put("formato", pago.getFormatoComprobante()); // Recupera el formato del comprobante
         return resultado;
     }
+    public void editarHonorarioPorMes(Long honorarioId, int mes, double nuevoMontoMensual) {
+        HonorarioContable honorarioContable = honorarioRepository.findById(honorarioId)
+                .orElseThrow(() -> new RuntimeException("Honorario no encontrado"));
+
+        MesHonorario mesHonorario = honorarioContable.getMesesHonorarios().stream()
+                .filter(m -> m.getMes() == mes)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Mes no encontrado"));
+
+        mesHonorario.setMontoMensual(BigDecimal.valueOf(nuevoMontoMensual));
+        honorarioRepository.save(honorarioContable); // Guardar los cambios
+    }
+    public void eliminarHonorario(Long honorarioId) {
+        HonorarioContable honorarioContable = honorarioRepository.findById(honorarioId)
+                .orElseThrow(() -> new RuntimeException("Honorario no encontrado"));
+
+        honorarioRepository.delete(honorarioContable); // Elimina el honorario
+    }
+
 }
