@@ -46,13 +46,14 @@ public class HonorarioController {
             @PathVariable Long honorarioId,
             @RequestParam("mes") int mes,
             @RequestParam("montoPago") double montoPago,
-            @RequestParam("comprobante") MultipartFile comprobante,
+            @RequestParam(value = "comprobante",required = false) MultipartFile comprobante,
             @RequestParam("fechaPagoReal") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaPagoReal,
             @RequestParam("metodoPago") MetodoPago metodoPago
             ) {
         try {
-            honorarioService.registrarPago(honorarioId, mes, montoPago, comprobante.getBytes(), fechaPagoReal, metodoPago);
-
+            honorarioService.registrarPago(honorarioId, mes, montoPago,
+                    comprobante != null ? comprobante.getBytes() : null,
+                    fechaPagoReal, metodoPago);
             return ResponseEntity.ok(Map.of("message", "Pago registrado con éxito."));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
