@@ -2,6 +2,13 @@ package com.ejemplo.usuarios_api.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+/*
+ *  ╔═══════════════════════════════════════╗
+ *  ║  NOTA: Enum pendiente de mejora       ║
+ *  ║  > Los enums deberían ser mayúsculas  ║
+ *  ║    Ej: PAGADO en vez de Pagado       ║
+ *  ╚═══════════════════════════════════════╝
+ */
 public enum EstadoDeuda {
     Pendiente,
     Pagado,
@@ -10,6 +17,11 @@ public enum EstadoDeuda {
 
     @JsonCreator
     public static EstadoDeuda fromString(String value) {
-        return EstadoDeuda.valueOf(value.toUpperCase());
+        for (EstadoDeuda estado : EstadoDeuda.values()) {
+            if (estado.name().equalsIgnoreCase(value)) {
+                return estado;
+            }
+        }
+        throw new IllegalArgumentException("No enum constant for value: " + value);
     }
 }
