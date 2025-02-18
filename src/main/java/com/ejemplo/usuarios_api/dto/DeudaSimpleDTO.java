@@ -1,29 +1,24 @@
 // DeudaSimpleDTO.java
 package com.ejemplo.usuarios_api.dto;
 
+import com.ejemplo.usuarios_api.model.Deuda;
+import com.ejemplo.usuarios_api.model.TipoDeuda;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.Optional;
+
+@Setter
+@Getter
+@AllArgsConstructor
 public class DeudaSimpleDTO {
     private String tipoDeuda;
     private String observaciones;
 
-    public DeudaSimpleDTO(String tipoDeuda, String observaciones) {
-        this.tipoDeuda = tipoDeuda;
-        this.observaciones = observaciones;
+    public DeudaSimpleDTO(Deuda model){
+        this.tipoDeuda = Optional.ofNullable(model.getTipoDeuda()).map(TipoDeuda::name).orElse(null);
+        this.observaciones = model.getObservaciones();
     }
 
-    // Getters y Setters
-    public String getTipoDeuda() {
-        return tipoDeuda;
-    }
-
-    public void setTipoDeuda(String tipoDeuda) {
-        this.tipoDeuda = tipoDeuda;
-    }
-
-    public String getObservaciones() {
-        return observaciones;
-    }
-
-    public void setObservaciones(String observaciones) {
-        this.observaciones = observaciones;
-    }
 }

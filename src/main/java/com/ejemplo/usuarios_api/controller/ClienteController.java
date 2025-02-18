@@ -10,6 +10,7 @@ import com.ejemplo.usuarios_api.service.DeudaService;
 import com.ejemplo.usuarios_api.service.PagoService;
 import com.ejemplo.usuarios_api.util.CsvUtil;
 import com.ejemplo.usuarios_api.util.ExcelUtil;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
@@ -24,6 +25,7 @@ import java.util.List;
 @RestController
 @CrossOrigin(origins = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 @RequestMapping("/api/clientes")
+@Log4j2
 public class ClienteController {
 
     @Autowired
@@ -58,7 +60,7 @@ public class ClienteController {
 
     // Actualizar un cliente existente
     @PutMapping("/{clienteId}")
-    public ResponseEntity<ClienteDTO> actualizarCliente(@PathVariable Long clienteId, @RequestBody Cliente clienteActualizado) {
+    public ResponseEntity<ClienteDTO> actualizarCliente(@PathVariable Long clienteId, @RequestBody ClienteDTO clienteActualizado) {
         Cliente cliente = clienteService.actualizarCliente(clienteId, clienteActualizado);
         ClienteDTO clienteDTO = clienteService.convertirClienteAClienteDTO(cliente);
         return ResponseEntity.ok(clienteDTO);
@@ -127,7 +129,8 @@ public class ClienteController {
                     .contentLength(excelBytes.length)
                     .body(resource);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error al exportar clientes con saldo pendiente: {}", e.getMessage());
+            log.error(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
