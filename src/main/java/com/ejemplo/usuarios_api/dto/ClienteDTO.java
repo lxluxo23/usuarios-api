@@ -1,7 +1,19 @@
 package com.ejemplo.usuarios_api.dto;
 
-import java.util.List;
+import com.ejemplo.usuarios_api.model.Cliente;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Setter
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
 public class ClienteDTO {
 
     private Long clienteId;
@@ -10,73 +22,22 @@ public class ClienteDTO {
     private String email;
     private String telefono;
     private String direccion;
-    private List<DeudaDTO> deudas; // Lista de DeudaDTO para representar las deudas del cliente
+    private List<DeudaDTO> deudas;
 
-    // Constructor completo
-    public ClienteDTO(Long clienteId, String nombre, String rut, String email, String telefono, String direccion, List<DeudaDTO> deudas) {
-        this.clienteId = clienteId;
-        this.nombre = nombre;
-        this.rut = rut;
-        this.email = email;
-        this.telefono = telefono;
-        this.direccion = direccion;
-        this.deudas = deudas;
-    }
-
-    // Getters y setters
-    public Long getClienteId() {
-        return clienteId;
-    }
-
-    public void setClienteId(Long clienteId) {
+    public ClienteDTO(Long clienteId) {
         this.clienteId = clienteId;
     }
 
-    public String getNombre() {
-        return nombre;
+    public ClienteDTO(Cliente model){
+        this.clienteId = model.getClienteId();
+        this.nombre = model.getNombre();
+        this.rut = model.getRut();
+        this.email = model.getEmail();
+        this.telefono = model.getTelefono();
+        this.direccion = model.getDireccion();
+        this.deudas = Optional.ofNullable(model.getDeudas()).orElse(List.of()).stream()
+                .map(DeudaDTO::new)
+                .collect(Collectors.toList());
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getRut() {
-        return rut;
-    }
-
-    public void setRut(String rut) {
-        this.rut = rut;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getTelefono() {
-        return telefono;
-    }
-
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
-    }
-
-    public String getDireccion() {
-        return direccion;
-    }
-
-    public void setDireccion(String direccion) {
-        this.direccion = direccion;
-    }
-
-    public List<DeudaDTO> getDeudas() {
-        return deudas;
-    }
-
-    public void setDeudas(List<DeudaDTO> deudas) {
-        this.deudas = deudas;
-    }
 }

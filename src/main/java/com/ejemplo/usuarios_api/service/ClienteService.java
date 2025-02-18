@@ -86,10 +86,9 @@ public class ClienteService {
     }
 
     // Actualizar un cliente
-    public Cliente actualizarCliente(Long clienteId, Cliente clienteActualizado) {
+    public Cliente actualizarCliente(Long clienteId, ClienteDTO clienteActualizado) {
         Cliente cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado con ID: " + clienteId));
-
         cliente.setNombre(clienteActualizado.getNombre());
         cliente.setRut(clienteActualizado.getRut());
         cliente.setEmail(clienteActualizado.getEmail());
