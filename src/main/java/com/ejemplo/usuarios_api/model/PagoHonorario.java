@@ -29,7 +29,7 @@ public class PagoHonorario {
     private LocalDate fechaPago;
 
     @Lob
-    @Column(name = "comprobante", nullable = false, columnDefinition = "LONGBLOB")
+    @Column(name = "comprobante", columnDefinition = "LONGBLOB")
     private byte[] comprobante; // Cambiado a byte[] para almacenar archivos como BLOB
 
     @Column(name = "fecha_pago_real", nullable = false)

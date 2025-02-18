@@ -46,13 +46,14 @@ public class HonorarioController {
             @PathVariable Long honorarioId,
             @RequestParam("mes") int mes,
             @RequestParam("montoPago") double montoPago,
-            @RequestParam("comprobante") MultipartFile comprobante,
+            @RequestParam(value = "comprobante",required = false) MultipartFile comprobante,
             @RequestParam("fechaPagoReal") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaPagoReal,
             @RequestParam("metodoPago") MetodoPago metodoPago
             ) {
         try {
-            honorarioService.registrarPago(honorarioId, mes, montoPago, comprobante.getBytes(), fechaPagoReal, metodoPago);
-
+            honorarioService.registrarPago(honorarioId, mes, montoPago,
+                    comprobante != null ? comprobante.getBytes() : null,
+                    fechaPagoReal, metodoPago);
             return ResponseEntity.ok(Map.of("message", "Pago registrado con éxito."));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -130,4 +131,30 @@ public class HonorarioController {
                     .body(null);
         }
     }
+
+    @PutMapping("/{honorarioId}/mes/{mes}")
+    public ResponseEntity<?> editarHonorarioPorMes(
+            @PathVariable Long honorarioId,
+            @PathVariable int mes,
+            @RequestParam("nuevoMontoMensual") double nuevoMontoMensual) {
+        try {
+            honorarioService.editarHonorarioPorMes(honorarioId, mes, nuevoMontoMensual);
+            return ResponseEntity.ok(Map.of("message", "Honorario actualizado con éxito."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al editar el honorario: " + e.getMessage()));
+        }
+    }
+    // Eliminar un honorario contable
+    @DeleteMapping("/{honorarioId}")
+    public ResponseEntity<?> eliminarHonorario(@PathVariable Long honorarioId) {
+        try {
+            honorarioService.eliminarHonorario(honorarioId);
+            return ResponseEntity.ok(Map.of("message", "Honorario contable eliminado con éxito."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al eliminar el honorario: " + e.getMessage()));
+        }
+    }
+
 }
