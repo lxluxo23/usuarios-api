@@ -32,13 +32,17 @@ public class HonorarioController {
             @PathVariable Long clienteId,
             @RequestBody HonorarioRequest honorarioRequest) {
         try {
-            honorarioService.crearHonorarioContable(clienteId, honorarioRequest.getMontoMensual());
+            // Ahora se pasa el anio al servicio
+            honorarioService.crearHonorarioContable(clienteId,
+                    honorarioRequest.getMontoMensual(),
+                    honorarioRequest.getAnio());
             return ResponseEntity.ok(Map.of("message", "Honorario contable creado con éxito."));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error al crear el honorario contable: " + e.getMessage()));
         }
     }
+
 
     // Registrar un pago para un mes específico
     @PostMapping("/{honorarioId}/pagos")

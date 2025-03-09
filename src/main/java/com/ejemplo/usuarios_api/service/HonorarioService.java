@@ -84,28 +84,29 @@ public class HonorarioService {
 
     // Crear un honorario contable
     @Transactional
-    public HonorarioContable crearHonorarioContable(Long clienteId, BigDecimal montoMensual) {
+    public HonorarioContable crearHonorarioContable(Long clienteId, BigDecimal montoMensual, int anio) {
+        // Buscar el cliente por ID
         Cliente cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new RuntimeException("Cliente no encontrado con ID: " + clienteId));
 
-        int anioActual = LocalDate.now().getYear();
-
-        // Verificar si ya existe un honorario para este cliente y año
-        if (!honorarioRepository.findByCliente_ClienteIdAndAnio(clienteId, anioActual).isEmpty()) {
-            throw new RuntimeException("Ya existe un honorario para este año.");
+        // Validar que no exista un honorario para este cliente y el año recibido (no el año actual)
+        if (!honorarioRepository.findByCliente_ClienteIdAndAnio(clienteId, anio).isEmpty()) {
+            throw new RuntimeException("Ya existe un honorario para el año " + anio);
         }
 
+        // Crear el honorario usando el año recibido
         HonorarioContable honorario = new HonorarioContable();
         honorario.setCliente(cliente);
         honorario.setMontoMensual(montoMensual);
         honorario.setMontoTotal(montoMensual.multiply(BigDecimal.valueOf(12)));
+        honorario.setAnio(anio);
         honorario.setMontoPagado(BigDecimal.ZERO);
         honorario.setEstado(EstadoDeuda.Pendiente);
-        honorario.setAnio(anioActual);
-        honorario.setFechaInicio(LocalDate.of(anioActual, 1, 1));
+        honorario.setFechaInicio(LocalDate.of(anio, 1, 1));
 
         HonorarioContable guardado = honorarioRepository.save(honorario);
 
+        // Crear los registros de cada mes para el honorario
         for (int mes = 1; mes <= 12; mes++) {
             MesHonorario mesHonorario = new MesHonorario();
             mesHonorario.setHonorario(guardado);
@@ -118,6 +119,7 @@ public class HonorarioService {
 
         return guardado;
     }
+
 
     // Registrar un pago para un mes específico
     public void registrarPago(Long honorarioId, int mes, double montoPago, byte[] comprobante, LocalDate fechaPagoReal, MetodoPago metodoPago) {

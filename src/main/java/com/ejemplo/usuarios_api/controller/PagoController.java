@@ -45,7 +45,7 @@ public class PagoController {
     public ResponseEntity<PagoDTO> registrarPago(
             @PathVariable Long deudaId,
             @RequestParam("montoPago") double montoPago,
-            @RequestParam("comprobante") MultipartFile comprobante,
+            @RequestParam(value = "comprobante", required = false) MultipartFile comprobante,
             @RequestParam("fechaPagoReal") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaPagoReal,
             @RequestParam("metodoPago") String metodoPago,
             @RequestParam(value = "observaciones", required = false) String observaciones
@@ -57,11 +57,18 @@ public class PagoController {
             pagoDTO.setFechaTransaccion(fechaPagoReal);
             pagoDTO.setObservaciones(observaciones);
 
+            byte[] comprobanteBytes = null;
+            String contentType = null;
+            if (comprobante != null && !comprobante.isEmpty()) {
+                comprobanteBytes = comprobante.getBytes();
+                contentType = comprobante.getContentType();
+            }
+
             PagoDTO pagoRegistrado = pagoService.registrarPago(
                     deudaId,
                     pagoDTO,
-                    comprobante.getBytes(),
-                    comprobante.getContentType()
+                    comprobanteBytes,
+                    contentType
             );
 
             return ResponseEntity.status(HttpStatus.CREATED).body(pagoRegistrado);
@@ -70,6 +77,7 @@ public class PagoController {
                     .body(null);
         }
     }
+
 
 
 

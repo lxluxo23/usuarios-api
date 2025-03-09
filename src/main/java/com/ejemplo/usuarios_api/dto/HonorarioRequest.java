@@ -6,8 +6,15 @@ import java.util.List;
 public class HonorarioRequest {
     private BigDecimal montoMensual;
     private List<MesPago> mesesPagados;
+    private int anio;
 
     // Getters y Setters
+    public int getAnio() {
+        return anio;
+    }
+    public void setAnio(int anio) {
+        this.anio = anio;
+    }
     public BigDecimal getMontoMensual() {
         return montoMensual;
     }
