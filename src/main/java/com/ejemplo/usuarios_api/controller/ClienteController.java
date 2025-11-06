@@ -23,7 +23,6 @@ import java.time.YearMonth;
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 @RequestMapping("/api/clientes")
 @Log4j2
 public class ClienteController {

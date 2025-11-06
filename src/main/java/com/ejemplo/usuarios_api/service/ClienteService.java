@@ -7,6 +7,8 @@ import com.ejemplo.usuarios_api.model.Cliente;
 import com.ejemplo.usuarios_api.repository.ClienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -98,6 +100,7 @@ public class ClienteService {
     }
 
     // Eliminar un cliente
+    @Transactional
     public void eliminarCliente(Long clienteId) {
         // Buscar el cliente
         Cliente cliente = clienteRepository.findById(clienteId)

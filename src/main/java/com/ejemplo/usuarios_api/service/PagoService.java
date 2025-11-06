@@ -55,6 +55,19 @@ public class PagoService {
         Deuda deuda = deudaRepository.findById(deudaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Deuda no encontrada con ID: " + deudaId));
 
+        // ✅ VALIDACIONES AGREGADAS
+        if (pagoDTO.getMonto() == null || pagoDTO.getMonto().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("El monto del pago debe ser mayor a cero");
+        }
+
+        if (pagoDTO.getMonto().compareTo(deuda.getMontoRestante()) > 0) {
+            throw new IllegalArgumentException(
+                    "El monto del pago ($" + pagoDTO.getMonto() +
+                            ") excede la deuda restante ($" + deuda.getMontoRestante() + ")"
+            );
+        }
+        // FIN VALIDACIONES ✅
+
         Pago pago = new Pago();
         pago.setDeuda(deuda);
         pago.setMonto(pagoDTO.getMonto());
@@ -64,8 +77,8 @@ public class PagoService {
         pago.setMes(pagoDTO.getFechaTransaccion().getMonthValue());
 
         // Guardar el comprobante
-        pago.setComprobante(comprobante); // Archivo binario
-        pago.setFormatoComprobante(formatoComprobante); // Tipo MIME (ej. "application/pdf")
+        pago.setComprobante(comprobante);
+        pago.setFormatoComprobante(formatoComprobante);
 
         // Actualizar monto restante
         deuda.setMontoRestante(deuda.getMontoRestante().subtract(pagoDTO.getMonto()));

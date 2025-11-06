@@ -128,6 +128,12 @@ public class HonorarioService {
         System.out.println("Honorario ID: " + honorarioId + ", Mes: " + mes);
         System.out.println("Monto del pago: " + montoPago);
 
+        // ✅ VALIDACIÓN AGREGADA
+        if (montoPago <= 0) {
+            throw new IllegalArgumentException("El monto del pago debe ser mayor a cero");
+        }
+        // FIN VALIDACIÓN ✅
+
         // Buscar el mes específico para el honorario
         MesHonorario mesHonorario = mesHonorarioRepository.findByHonorario_HonorarioIdAndMes(honorarioId, mes)
                 .orElseThrow(() -> new IllegalArgumentException(

@@ -194,6 +194,19 @@ public class DeudaService {
         Deuda deuda = deudaRepository.findById(deudaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Deuda no encontrada con ID: " + deudaId));
 
+        // ✅ VALIDACIONES AGREGADAS
+        if (pagoRequestDTO.getMonto() == null || pagoRequestDTO.getMonto().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("El monto del pago debe ser mayor a cero");
+        }
+
+        if (pagoRequestDTO.getMonto().compareTo(deuda.getMontoRestante()) > 0) {
+            throw new IllegalArgumentException(
+                    "El monto del pago ($" + pagoRequestDTO.getMonto() +
+                            ") excede la deuda restante ($" + deuda.getMontoRestante() + ")"
+            );
+        }
+        // FIN VALIDACIONES
+
         // Crear una nueva instancia de Pago
         Pago pago = new Pago();
         pago.setDeuda(deuda);
