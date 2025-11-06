@@ -31,17 +31,21 @@ public class IndicadoresService {
         // Calcular deuda total
         List<Deuda> deudas = deudaRepository.findByClienteClienteId(clienteId);
         BigDecimal totalDebt = deudas.stream()
+                .filter(deuda -> deuda.getMontoRestante() != null) //filtro
                 .map(Deuda::getMontoRestante)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Calcular deuda del mes actual
         BigDecimal currentMonthDebt = deudas.stream()
+                .filter(deuda -> deuda.getFechaVencimiento() != null) // filtro
+                .filter(deuda -> deuda.getMontoRestante() != null)    // filtro
                 .filter(deuda -> deuda.getFechaVencimiento().getMonthValue() == LocalDate.now().getMonthValue())
                 .map(Deuda::getMontoRestante)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Obtener última transacción
         Pago lastPayment = pagos.stream()
+                .filter(pago -> pago.getFechaTransaccion() != null) // filtro
                 .max((p1, p2) -> p1.getFechaTransaccion().compareTo(p2.getFechaTransaccion()))
                 .orElse(null);
 
@@ -51,7 +55,6 @@ public class IndicadoresService {
                 lastPayment.getMonto())
                 : new IndicadoresDTO.LastTransactionDTO("Sin datos", BigDecimal.ZERO);
 
-        // Crear el DTO de respuesta
         return new IndicadoresDTO(totalPayments, totalDebt, currentMonthDebt, lastTransaction);
     }
 }
