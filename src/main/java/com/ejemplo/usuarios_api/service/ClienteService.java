@@ -6,9 +6,12 @@ import com.ejemplo.usuarios_api.dto.DeudaDTO;
 import com.ejemplo.usuarios_api.model.Cliente;
 import com.ejemplo.usuarios_api.repository.ClienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -133,4 +136,17 @@ public class ClienteService {
     public List<ClienteSaldoPendienteDTO> obtenerClientesConSaldoPendientePorFecha(int mes, int anio) {
         return clienteRepository.findClientesConSaldoPendientePorFecha(mes, anio);
     }
+
+    public Page<ClienteDTO> obtenerClientesPaginados(Pageable pageable, String search) {
+        Page<Cliente> clientesPage;
+
+        if (search != null && !search.trim().isEmpty()) {
+            clientesPage = clienteRepository.findByNombreContainingIgnoreCase(search, pageable);
+        } else {
+            clientesPage = clienteRepository.findAll(pageable);
+        }
+
+        return clientesPage.map(this::convertirClienteAClienteDTO);
+    }
+
 }

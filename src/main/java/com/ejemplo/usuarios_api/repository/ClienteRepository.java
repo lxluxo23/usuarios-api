@@ -2,9 +2,13 @@ package com.ejemplo.usuarios_api.repository;
 
 import com.ejemplo.usuarios_api.dto.ClienteSaldoPendienteDTO;
 import com.ejemplo.usuarios_api.model.Cliente;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -21,4 +25,6 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
             "WHERE MONTH(d.fechaVencimiento) = :mes AND YEAR(d.fechaVencimiento) = :anio " +
             "GROUP BY c.clienteId, c.nombre, c.rut, c.email, c.telefono")
     List<ClienteSaldoPendienteDTO> findClientesConSaldoPendientePorFecha(int mes, int anio);
+
+    Page<Cliente> findByNombreContainingIgnoreCase(String search, Pageable pageable);
 }

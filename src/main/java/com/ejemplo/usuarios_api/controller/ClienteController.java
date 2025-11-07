@@ -18,6 +18,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 import java.nio.charset.StandardCharsets;
 import java.time.YearMonth;
 import java.util.List;
@@ -44,8 +49,20 @@ public class ClienteController {
 
     // Obtener todos los clientes
     @GetMapping
-    public ResponseEntity<List<ClienteDTO>> obtenerClientes() {
-        List<ClienteDTO> clientes = clienteService.obtenerTodosLosClientes();
+    public ResponseEntity<Page<ClienteDTO>> obtenerClientes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "nombre") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<ClienteDTO> clientes = clienteService.obtenerClientesPaginados(pageable, search);
         return ResponseEntity.ok(clientes);
     }
 
