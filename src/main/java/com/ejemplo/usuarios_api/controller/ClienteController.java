@@ -17,7 +17,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.domain.Page;
 
 import java.nio.charset.StandardCharsets;
 import java.time.YearMonth;
@@ -45,10 +44,8 @@ public class ClienteController {
 
     // Obtener todos los clientes
     @GetMapping
-    public ResponseEntity<Page<ClienteDTO>> obtenerClientes(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        Page<ClienteDTO> clientes = clienteService.obtenerTodosLosClientes(page, size);
+    public ResponseEntity<List<ClienteDTO>> obtenerClientes() {
+        List<ClienteDTO> clientes = clienteService.obtenerTodosLosClientes();
         return ResponseEntity.ok(clientes);
     }
 

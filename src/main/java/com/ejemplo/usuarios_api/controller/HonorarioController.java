@@ -52,28 +52,8 @@ public class HonorarioController {
             @RequestParam(value = "comprobante",required = false) MultipartFile comprobante,
             @RequestParam("fechaPagoReal") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaPagoReal,
             @RequestParam("metodoPago") MetodoPago metodoPago
-    ) {
+            ) {
         try {
-            // VALIDACIÓN DE TAMAÑO DE ARCHIVO AGREGADA
-            if (comprobante != null && !comprobante.isEmpty()) {
-                long maxSize = 10 * 1024 * 1024; // 10MB en bytes
-                if (comprobante.getSize() > maxSize) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                            .body(Map.of("error", "El archivo excede el tamaño máximo permitido de 10MB"));
-                }
-
-                // Validar tipo de archivo (opcional pero recomendado)
-                String contentType = comprobante.getContentType();
-                if (contentType != null &&
-                        !contentType.equals("image/jpeg") &&
-                        !contentType.equals("image/png") &&
-                        !contentType.equals("application/pdf")) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                            .body(Map.of("error", "Tipo de archivo no permitido. Solo se aceptan: JPG, PNG, PDF"));
-                }
-            }
-            // FIN VALIDACIÓN
-
             honorarioService.registrarPago(honorarioId, mes, montoPago,
                     comprobante != null ? comprobante.getBytes() : null,
                     fechaPagoReal, metodoPago);

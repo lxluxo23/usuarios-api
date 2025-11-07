@@ -9,9 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -36,21 +33,12 @@ public class ClienteService {
 
     // Crear un nuevo cliente con validaciones
     public Cliente crearCliente(Cliente cliente) {
-        // Validar que el nombre no esté vacío
-        if (cliente.getNombre() == null || cliente.getNombre().trim().isEmpty()) {
+        if (cliente.getNombre() == null || cliente.getNombre().isEmpty()) {
             throw new IllegalArgumentException("El nombre es obligatorio.");
         }
-
-        // Validar que el RUT no esté vacío
-        if (cliente.getRut() == null || cliente.getRut().trim().isEmpty()) {
+        if (cliente.getRut() == null || cliente.getRut().isEmpty()) {
             throw new IllegalArgumentException("El RUT es obligatorio.");
         }
-
-        // VALIDACIÓN AGREGADA: Verificar que el RUT no esté duplicado
-        if (clienteRepository.existsByRut(cliente.getRut())) {
-            throw new IllegalArgumentException("Ya existe un cliente con el RUT: " + cliente.getRut());
-        }
-        // FIN VALIDACIÓN ✅
 
         // Guardar cliente en la base de datos
         return clienteRepository.save(cliente);
@@ -84,11 +72,12 @@ public class ClienteService {
         );
     }
 
-    // Obtener todos los clientes con paginación y convertirlos a ClienteDTO
-    public Page<ClienteDTO> obtenerTodosLosClientes(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Cliente> clientesPage = clienteRepository.findAll(pageable);
-        return clientesPage.map(this::convertirClienteAClienteDTO);
+    // Obtener todos los clientes y convertirlos a ClienteDTO
+    public List<ClienteDTO> obtenerTodosLosClientes() {
+        List<Cliente> clientes = clienteRepository.findAll();
+        return clientes.stream()
+                .map(this::convertirClienteAClienteDTO)
+                .collect(Collectors.toList());
     }
 
     // Obtener un cliente por ID y convertirlo a ClienteDTO
@@ -102,19 +91,6 @@ public class ClienteService {
     public Cliente actualizarCliente(Long clienteId, ClienteDTO clienteActualizado) {
         Cliente cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado con ID: " + clienteId));
-
-        // ✅ VALIDACIÓN AGREGADA: Si cambia el RUT, verificar que no esté duplicado
-        if (clienteActualizado.getRut() != null &&
-                !clienteActualizado.getRut().equals(cliente.getRut())) {
-            // El RUT cambió, validar que no exista en otro cliente
-            if (clienteRepository.existsByRut(clienteActualizado.getRut())) {
-                throw new IllegalArgumentException(
-                        "Ya existe otro cliente con el RUT: " + clienteActualizado.getRut()
-                );
-            }
-        }
-        // FIN VALIDACIÓN ✅
-
         cliente.setNombre(clienteActualizado.getNombre());
         cliente.setRut(clienteActualizado.getRut());
         cliente.setEmail(clienteActualizado.getEmail());

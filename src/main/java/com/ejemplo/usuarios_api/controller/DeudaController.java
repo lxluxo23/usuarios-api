@@ -6,7 +6,6 @@ import com.ejemplo.usuarios_api.model.Deuda;
 import com.ejemplo.usuarios_api.service.DeudaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,12 +21,9 @@ public class DeudaController {
     private DeudaService deudaService;
 
     // Obtener todas las deudas
-// Obtener todas las deudas con paginación
     @GetMapping
-    public ResponseEntity<Page<DeudaDTO>> obtenerDeudas(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        Page<DeudaDTO> deudas = deudaService.obtenerTodasLasDeudas(page, size);
+    public ResponseEntity<List<DeudaDTO>> obtenerDeudas() {
+        List<DeudaDTO> deudas = deudaService.obtenerTodasLasDeudas();
         return ResponseEntity.ok(deudas);
     }
 
