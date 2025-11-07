@@ -10,6 +10,8 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.springframework.data.domain.Page;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -26,10 +28,12 @@ public class PagoController {
     @Autowired
     private DeudaService deudaService;
 
-    // Obtener todos los pagos
+    // Obtener todos los pagos con paginación
     @GetMapping
-    public ResponseEntity<List<PagoDTO>> obtenerPagos() {
-        List<PagoDTO> pagos = pagoService.obtenerTodosLosPagos();
+    public ResponseEntity<Page<PagoDTO>> obtenerPagos(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Page<PagoDTO> pagos = pagoService.obtenerTodosLosPagos(page, size);
         return ResponseEntity.ok(pagos);
     }
 
@@ -50,6 +54,26 @@ public class PagoController {
             @RequestParam(value = "observaciones", required = false) String observaciones
     ) {
         try {
+            // VALIDACIÓN DE TAMAÑO DE ARCHIVO AGREGADA
+            if (comprobante != null && !comprobante.isEmpty()) {
+                long maxSize = 10 * 1024 * 1024; // 10MB en bytes
+                if (comprobante.getSize() > maxSize) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(null);
+                }
+
+                // Validar tipo de archivo (opcional pero recomendado)
+                String contentType = comprobante.getContentType();
+                if (contentType != null &&
+                        !contentType.equals("image/jpeg") &&
+                        !contentType.equals("image/png") &&
+                        !contentType.equals("application/pdf")) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(null);
+                }
+            }
+            // FIN VALIDACIÓN
+
             PagoDTO pagoDTO = new PagoDTO();
             pagoDTO.setMonto(BigDecimal.valueOf(montoPago));
             pagoDTO.setMetodoPago(metodoPago);
@@ -57,17 +81,17 @@ public class PagoController {
             pagoDTO.setObservaciones(observaciones);
 
             byte[] comprobanteBytes = null;
-            String contentType = null;
+            String formatoComprobante = null;
             if (comprobante != null && !comprobante.isEmpty()) {
                 comprobanteBytes = comprobante.getBytes();
-                contentType = comprobante.getContentType();
+                formatoComprobante = comprobante.getContentType();
             }
 
             PagoDTO pagoRegistrado = pagoService.registrarPago(
                     deudaId,
                     pagoDTO,
                     comprobanteBytes,
-                    contentType
+                    formatoComprobante
             );
 
             return ResponseEntity.status(HttpStatus.CREATED).body(pagoRegistrado);

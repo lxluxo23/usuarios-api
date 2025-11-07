@@ -26,6 +26,7 @@ public class MovimientoService {
         // Obtener los pagos normales
         List<MovimientoDTO> pagosNormales = pagoRepository.findByDeudaClienteClienteId(clienteId)
                 .stream()
+                .filter(pago -> pago.getFechaTransaccion() != null) // ✅ FILTRO AGREGADO
                 .map(pago -> new MovimientoDTO(
                         pago.getFechaTransaccion(),
                         "Pago Normal",
@@ -37,6 +38,7 @@ public class MovimientoService {
         // Obtener los pagos de honorarios
         List<MovimientoDTO> pagosHonorarios = pagoHonorarioRepository.findByMesHonorarioHonorarioClienteClienteId(clienteId)
                 .stream()
+                .filter(pagoHonorario -> pagoHonorario.getFechaPago() != null) // ✅ FILTRO AGREGADO
                 .map(pagoHonorario -> new MovimientoDTO(
                         pagoHonorario.getFechaPago(),
                         "Pago Honorario",
@@ -50,8 +52,13 @@ public class MovimientoService {
         movimientos.addAll(pagosNormales);
         movimientos.addAll(pagosHonorarios);
 
-        // Ordenar por fecha (descendente)
-        movimientos.sort(Comparator.comparing(MovimientoDTO::getFecha).reversed());
+        // Ordenar por fecha (descendente) con manejo de nulls
+        movimientos.sort(
+                Comparator.comparing(
+                        MovimientoDTO::getFecha,
+                        Comparator.nullsLast(Comparator.naturalOrder()) //  MANEJO DE NULLS AGREGADO
+                ).reversed()
+        );
 
         return movimientos;
     }

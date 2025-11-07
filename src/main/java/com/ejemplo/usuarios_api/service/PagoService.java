@@ -12,6 +12,10 @@ import com.ejemplo.usuarios_api.repository.PagoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -121,11 +125,11 @@ public class PagoService {
         return pago.getDeuda().getDeudaId();
     }
 
-    // Obtener todos los pagos
-    public List<PagoDTO> obtenerTodosLosPagos() {
-        return pagoRepository.findAll().stream()
-                .map(this::convertirPagoAPagoDTO)
-                .collect(Collectors.toList());
+    // Obtener todos los pagos con paginación
+    public Page<PagoDTO> obtenerTodosLosPagos(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Pago> pagosPage = pagoRepository.findAll(pageable);
+        return pagosPage.map(this::convertirPagoAPagoDTO);
     }
 
     public List<PagoDTO> obtenerPagosPorDeuda(Long deudaId) {
